@@ -1,4 +1,5 @@
-# ytmd-stream-integration
+# Pear Connect is a Stream Song Request bridge for Pear Desktop by th-ch
+## Integrating within the backend API server and connecting with Tikfinity and Streamer.Bot
 
 Chat-driven song requests for **[Pear Desktop](https://github.com/th-ch/youtube-music)** (the YouTube Music Desktop App). Bridges **Twitch**, **TikTok Live** (via [TikFinity](https://tikfinity.zerody.one/)) and **YouTube Live** chat into a single song-request queue that plays through your local YouTube Music app.
 
