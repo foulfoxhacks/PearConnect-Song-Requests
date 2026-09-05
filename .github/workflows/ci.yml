@@ -1,0 +1,41 @@
+name: PearConnect CI
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Dependency audit report
+        run: npm audit --json > audit.json || true
+      - name: Export reproducible test workspace
+        run: |
+          git archive HEAD --format=zip --output=source.zip
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile, ZIP_DEFLATED
+          with ZipFile('dependencies.zip', 'w', ZIP_DEFLATED) as archive:
+              for path in Path('node_modules').rglob('*'):
+                  if path.is_file():
+                      archive.write(path, str(path))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pearconnect-baseline
+          path: |
+            source.zip
+            dependencies.zip
+            audit.json
+          retention-days: 3
+          if-no-files-found: error
