@@ -15,13 +15,12 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: npm ci
+      - run: npm ci --ignore-scripts
+      - run: npm audit fix --ignore-scripts
       - run: npm test
-      - name: Dependency audit report
-        run: npm audit --json > audit.json || true
-      - name: Export reproducible test workspace
+      - run: npm audit --json > audit.json
+      - name: Export repaired dependency snapshot
         run: |
-          git archive HEAD --format=zip --output=source.zip
           python3 - <<'PY'
           from pathlib import Path
           from zipfile import ZipFile, ZIP_DEFLATED
@@ -32,9 +31,9 @@ jobs:
           PY
       - uses: actions/upload-artifact@v4
         with:
-          name: pearconnect-baseline
+          name: pearconnect-dependencies
           path: |
-            source.zip
+            package-lock.json
             dependencies.zip
             audit.json
           retention-days: 3
