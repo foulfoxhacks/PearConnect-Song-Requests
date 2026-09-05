@@ -1,27 +1,80 @@
 const api = window.pearconnect;
 const $ = selector => document.querySelector(selector);
 let snapshot, initialized = false, busy = false, previewReady = false;
-const labels = { ready: 'Connected', not_configured: 'Authorization needed', disconnected: 'Disconnected', unauthorized: 'Authorization expired', awaiting_authorization: 'Awaiting approval', dry_run: 'Dry run', connecting: 'Connecting…', reconnecting: 'Reconnecting…', connected_waiting_for_chat: 'Connected · waiting', chat_received: 'Chat arriving', webhook_listening: 'Webhook listening', disabled: 'Disabled', enqueue_confirmed: 'Enqueue confirmed', outcome_uncertain: 'Outcome uncertain', requests_paused: 'Requests paused' };
-const label = value => labels[value] || value.replaceAll('_', ' ');
+const labels = { ready: 'Connected', not_configured: 'Authorization needed', disconnected: 'Disconnected', unauthorized: 'Authorization expired', awaiting_authorization: 'Awaiting approval', dry_run: 'Dry run', connecting: 'Connecting…', reconnecting: 'Reconnecting…', connected_waiting_for_chat: 'Connected · waiting', chat_received: 'Chat arriving', webhook_listening: 'Webhook listening', disabled: 'Disabled', enqueue_confirmed: 'Enqueue confirmed', outcome_uncertain: 'Outcome uncertain', requests_paused: 'Requests paused', received: 'Received', checking: 'Checking', searching: 'Searching', enqueuing: 'Enqueuing', completed: 'Completed', rejected: 'Rejected', failed: 'Failed', tiktok: 'TikTok', twitch: 'Twitch', youtube: 'YouTube', simple: 'TikFinity', advanced: 'Streamer.bot' };
+const label = value => labels[value] || String(value || 'unknown').replaceAll('_', ' ');
 const when = value => value ? new Date(value).toLocaleTimeString() : 'never';
-function notice(message, error = false) { $('#notice').hidden = false; $('#notice').textContent = message; $('#notice').classList.toggle('error', error); }
-function view(name) {
-  document.querySelectorAll('[data-page]').forEach(el => { el.hidden = el.dataset.page !== name; });
-  document.querySelectorAll('nav button').forEach(el => el.classList.toggle('selected', el.dataset.view === name));
-  $('#page-title').textContent = { dashboard: 'Dashboard', requests: 'Requests & queue', rules: 'Request rules', connections: 'Connections', activity: 'Activity & diagnostics', setup: 'Let’s set up your stream' }[name];
+const pages = {
+  dashboard: ['YOUR WORKSPACE', 'Stream overview', 'Your music, connections and requests. All in one place.'],
+  requests: ['YOUR WORKSPACE', 'Requests & queue', 'Follow each request, then see what your player has queued.'],
+  rules: ['CONFIGURATION', 'Request rules', 'Set the rhythm for your community. The same rules apply to every input.'],
+  connections: ['CONFIGURATION', 'Connections', 'Bring your player and your stream together.'],
+  activity: ['SUPPORT', 'Activity & diagnostics', 'Understand each result and find the details when you need them.'],
+  setup: ['GETTING STARTED', 'Ready for your first request?', 'Connect your music, bring in your chat and make the rules yours.']
+};
+function notice(message, error = false) {
+  $('#notice').hidden = false;
+  $('#notice').textContent = message;
+  $('#notice').classList.toggle('error', error);
 }
-function fill(form, values) { for (const [key, value] of Object.entries(values)) { const input = form.elements.namedItem(key); if (input) input.value = value; } }
+function view(name) {
+  if (!pages[name]) return;
+  $('#notice').hidden = true;
+  document.querySelectorAll('[data-page]').forEach(el => { el.hidden = el.dataset.page !== name; });
+  document.querySelectorAll('nav button').forEach(el => {
+    const selected = el.dataset.view === name;
+    el.classList.toggle('selected', selected);
+    if (selected) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
+  });
+  [$('#page-context').textContent, $('#page-title').textContent, $('#page-description').textContent] = pages[name];
+  $('#main-content').focus({ preventScroll: true });
+  window.scrollTo(0, 0);
+}
+function fill(form, values) {
+  for (const [key, value] of Object.entries(values)) {
+    const input = form.elements.namedItem(key);
+    if (input) input.value = value;
+  }
+}
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
 function rows(container, entries) {
   container.replaceChildren();
-  if (!entries.length) { const empty = document.createElement('div'); empty.className = 'empty'; empty.textContent = 'Your next request will appear here.'; container.append(empty); return; }
-  for (const entry of entries) {
-    const row = document.createElement('div'); row.className = 'activity-row';
-    const detail = document.createElement('div'), title = document.createElement('strong'), message = document.createElement('p'), time = document.createElement('small'), result = document.createElement('div');
-    title.textContent = `${entry.user} · ${entry.command === 'request' ? entry.query || 'Empty request' : label(entry.command)}`;
-    message.textContent = entry.message || label(entry.state); time.textContent = `${when(entry.time)} · ${entry.source}`;
-    result.className = `result ${entry.state}`; result.textContent = label(entry.state);
-    detail.append(title, message, time); row.append(detail, result); container.append(row);
+  if (!entries.length) {
+    const empty = element('div', 'empty'), symbol = element('span', 'empty-symbol', '♫'), copy = element('div');
+    symbol.setAttribute('aria-hidden', 'true');
+    copy.append(element('strong', '', 'The next request is yours to discover.'), element('p', '', 'Requests and their results will appear here as they arrive.'));
+    empty.append(symbol, copy); container.append(empty); return;
   }
+  const table = element('table', 'activity-table'), head = element('thead'), header = element('tr'), body = element('tbody');
+  const caption = element('caption', 'sr-only', container.id === 'recent' ? 'Recent song request results' : 'Command history and results');
+  for (const title of ['Viewer / request', 'Source', 'Received', 'Result']) {
+    const cell = element('th', '', title); cell.scope = 'col'; header.append(cell);
+  }
+  head.append(header);
+  for (const entry of entries) {
+    const row = element('tr'), detail = element('td'), result = element('td');
+    detail.append(element('strong', '', entry.user || 'Unknown viewer'), element('span', 'request-query', entry.command === 'request' ? entry.query || 'Empty request' : label(entry.command)));
+    if (entry.message) detail.append(element('p', 'request-message', entry.message));
+    result.append(element('span', `result ${entry.state}`, label(entry.state)));
+    row.append(detail, element('td', '', label(entry.source)), element('td', '', when(entry.time)), result); body.append(row);
+  }
+  table.append(caption, head, body); container.append(table);
+}
+function queue(tracks) {
+  const container = $('#player-queue'); container.replaceChildren();
+  if (!tracks.length) { container.append(element('p', 'empty-queue', 'No queue snapshot to display.')); return; }
+  tracks.forEach((track, index) => {
+    const row = element('div', 'queue-row'), copy = element('div');
+    copy.append(element('strong', '', track.title), element('p', '', track.artist || 'Artist unavailable'));
+    row.append(element('span', 'queue-index', String(index + 1).padStart(2, '0')), copy);
+    if (track.selected) row.append(element('span', 'queue-current', 'CURRENT'));
+    container.append(row);
+  });
 }
 function render(value, forms = false) {
   snapshot = value; const s = value.status;
@@ -29,14 +82,24 @@ function render(value, forms = false) {
   $('#connection-current').textContent = $('#mode-label').textContent;
   $('#player-state').textContent = label(s.player);
   $('#input-state').textContent = label(s.input.state);
-  $('#track').textContent = s.currentTrack?.title || (s.player === 'ready' ? 'Player reachable · currently idle' : 'Open Connections to set up your player');
-  $('#chat-detail').textContent = `Last chat: ${when(s.input.lastChatAt)} · last command: ${when(s.input.lastCommandAt)}`;
+  $('#track').textContent = s.dryRun ? 'Player writes are disabled for this session' : s.player === 'ready' ? 'Pear Desktop is reachable' : 'Open Connections to set up your player';
+  $('#chat-detail').textContent = s.input.lastChatAt ? `Last chat received at ${when(s.input.lastChatAt)}` : s.connectionMode === 'simple' ? 'Waiting for a chat event from TikFinity' : 'Commands arrive through your automation';
   $('#intake-state').textContent = s.requestsEnabled ? 'Accepting requests' : 'Paused';
-  $('#intake-toggle').textContent = s.requestsEnabled ? 'Pause requests' : 'Start accepting requests';
+  $('#intake-toggle-label').textContent = s.requestsEnabled ? 'Pause requests' : 'Enable requests';
+  $('#intake-toggle .control-icon').textContent = s.requestsEnabled ? 'Ⅱ' : '▷';
   $('#intake-toggle').dataset.action = s.requestsEnabled ? 'pause' : 'resume';
-  $('#now-playing').textContent = s.currentTrack?.title || (s.player === 'ready' ? 'Nothing playing right now' : 'Connect your player');
-  $('#now-artist').textContent = s.currentTrack?.artist || 'Enqueue confirmation appears in request history.';
-  $('#reply-capability').textContent = s.chatReplies === 'not_configured' ? 'TikTok chat replies: not configured. !np and !queue results appear in PearConnect’s activity feed.' : 'TikTok chat replies: managed by your Streamer.bot / TikFinity relay. PearConnect cannot verify reply delivery.';
+  $('#toolbar-status').textContent = s.dryRun ? 'Dry run · playback unchanged' : s.player === 'ready' ? 'Pear Desktop connected' : `Pear Desktop · ${label(s.player).toLowerCase()}`;
+  const playerState = s.player === 'ready' ? 'ready' : ['disconnected', 'unauthorized'].includes(s.player) ? 'error' : 'waiting';
+  $('#player-dot').dataset.state = playerState; $('#toolbar-dot').dataset.state = playerState;
+  $('#input-dot').dataset.state = s.input.state === 'chat_received' ? 'ready' : ['connected_waiting_for_chat', 'webhook_listening', 'connecting', 'reconnecting'].includes(s.input.state) ? 'waiting' : s.input.state === 'disabled' ? 'disabled' : 'error';
+  $('#intake-dot').dataset.state = s.requestsEnabled ? 'enabled' : 'paused';
+  $('#now-playing').textContent = s.currentTrack?.title || (s.player === 'ready' ? 'Nothing playing right now' : 'Your music starts here');
+  $('#now-artist').textContent = s.currentTrack?.artist || (s.player === 'ready' ? 'Waiting for the player to report a track.' : 'Connect Pear Desktop to see what’s playing.');
+  $('#signal-event').textContent = s.input.lastEventAt ? when(s.input.lastEventAt) : '—';
+  $('#signal-chat').textContent = s.input.lastChatAt ? when(s.input.lastChatAt) : '—';
+  $('#signal-command').textContent = s.input.lastCommandAt ? when(s.input.lastCommandAt) : '—';
+  $('#signal-note').textContent = s.connectionMode === 'simple' ? 'A connection is the first step. Chat events confirm that your stream is reaching PearConnect.' : 'Advanced input reports recognized commands. Individual chat events stay with your automation.';
+  $('#reply-capability').textContent = s.chatReplies === 'not_configured' ? `TikTok chat replies: not configured. !${value.rules.CMD_NOWPLAYING} and !${value.rules.CMD_QUEUE} results appear in PearConnect’s activity feed.` : 'TikTok chat replies: managed by your Streamer.bot / TikFinity relay. PearConnect cannot verify reply delivery.';
   $('#connection-event').textContent = `Last event: ${when(s.input.lastEventAt)}`;
   $('#connection-command').textContent = `Last recognized command: ${when(s.input.lastCommandAt)}`;
   $('#credential-state').textContent = value.hasPlayerCredential ? 'Player credential saved · kept outside this window' : 'Authorization needed';
@@ -44,13 +107,17 @@ function render(value, forms = false) {
   $('#advanced-card').hidden = s.connectionMode !== 'advanced';
   $('#startup-error').hidden = !value.startupError; $('#startup-error').textContent = value.startupError || '';
   $('#welcome').hidden = value.hasPlayerCredential;
-  rows($('#recent'), s.activity.slice(-4).reverse()); rows($('#history'), s.activity.slice().reverse()); rows($('#all-activity'), s.activity.slice().reverse());
+  document.querySelectorAll('[data-mode]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.mode === s.connectionMode)));
+  const recent = s.activity.filter(entry => entry.command === 'request').slice(-4).reverse();
+  $('#recent-count').textContent = `${recent.length} MOST RECENT`;
+  rows($('#recent'), recent); rows($('#history'), s.activity.slice().reverse()); rows($('#all-activity'), s.activity.slice().reverse());
   $('#technical-log').textContent = s.logs.map(entry => `${entry.time} ${entry.level} ${entry.message}`).join('\n') || 'No technical entries this session.';
   if (!initialized || forms) { fill($('#rules-form'), value.rules); fill($('#connections-form'), value.connections); $('#connections-form').elements.TWITCH_OAUTH.value = ''; initialized = true; }
 }
 async function call(name, payload, formUpdate = false) {
   if (busy) return;
   busy = true;
+  if (name !== 'snapshot') $('#notice').hidden = true;
   document.querySelectorAll('button:not([data-view])').forEach(button => { button.disabled = true; });
   if (name === 'authorize') notice('Approve PearConnect in Pear Desktop. Waiting for authorization…');
   try {
@@ -64,14 +131,14 @@ async function call(name, payload, formUpdate = false) {
     else if (['connections', 'reconnect', 'mode', 'authorize', 'importConfig', 'rotateSecret'].includes(name)) notice('Settings applied. Requests are paused; enable them when ready.');
     if (name === 'previewDiagnostics') { $('#diagnostic-preview').hidden = false; $('#diagnostic-preview').textContent = value.preview; previewReady = true; }
     if (name === 'exportDiagnostics') previewReady = false;
-    if (name === 'playerQueue') {
-      $('#queue-note').textContent = value.message; $('#player-queue').replaceChildren();
-      for (const track of value.tracks) { const row = document.createElement('div'); row.className = 'activity-row'; row.textContent = `${track.selected ? 'Current · ' : ''}${track.title}${track.artist ? ' — ' + track.artist : ''}`; $('#player-queue').append(row); }
-    }
+    if (name === 'playerQueue') { $('#queue-note').textContent = value.message; queue(value.tracks); }
     return value;
   } catch (error) { notice(error.message || 'Operation failed.', true); }
   finally { busy = false; document.querySelectorAll('button:not([data-view])').forEach(button => { button.disabled = false; }); $('#export-report').disabled = !previewReady; }
 }
+
+// Focus the workspace without changing the URL used to authenticate desktop IPC.
+$('.skip-link').addEventListener('click', event => { event.preventDefault(); $('#main-content').focus(); window.scrollTo(0, 0); });
 document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => view(button.dataset.view)));
 document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => call(button.dataset.action)));
 document.querySelectorAll('[data-mode]').forEach(button => button.addEventListener('click', () => call('mode', button.dataset.mode, true)));

@@ -28,7 +28,7 @@ export async function launchDesktop({ dataDir = app.getPath('userData'), show = 
     controller.engine = new PearConnectEngine(validateSettings(controller.env));
     controller.startupError = initialError;
   }
-  const window = new BrowserWindow({ title: 'PearConnect Desktop', width: 1240, height: 850, minWidth: 860, minHeight: 620, show: false, backgroundColor: '#101510',
+  const window = new BrowserWindow({ title: 'PearConnect Desktop', width: 1240, height: 850, minWidth: 860, minHeight: 620, show: false, backgroundColor: '#151819',
     webPreferences: { preload: join(directory, 'preload.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true, webviewTag: false } });
   window.setMenuBarVisibility(false);
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));

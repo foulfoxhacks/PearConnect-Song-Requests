@@ -27,12 +27,24 @@ Output: `dist/PearConnect-win32-x64/`. The package contains only application cod
 2. Open Pear Desktop and enable its API Server plugin. Use **Authorize PearConnect**, then approve in Pear Desktop. The credential is saved without being printed or copied into the renderer.
 3. For Simple, run TikFinity Desktop on the same computer and connect it to your livestream. The default address is `ws://127.0.0.1:21213/`. Edit it in Connections if necessary.
 4. Configure commands, cooldowns, duration limits, blocklists and request/skip permissions in Rules.
-5. Use **Validate sample request** to check identity, query and basic permissions without player calls or quota changes. Use **Test connection** separately to verify player reachability. Validation does not prove a search result’s duration or live command delivery.
-6. Click **Start accepting requests**. Every desktop launch, mode switch or reconnect starts paused.
+5. Use **Validate sample request** to check identity, query and basic permissions without player calls or quota changes. Use **Test player connection** separately to verify player reachability. Validation does not prove a search result’s duration or live command delivery.
+6. Click **Enable requests** in the top bar. Every desktop launch, mode switch or reconnect starts paused.
 
 Pausing new requests does not pause music. The application shows socket connection, last chat time and last recognized command separately. An open socket does not prove TikFinity is receiving your stream’s chat. In Simple, `!np` and `!queue` results appear in the activity feed; TikTok replies are **not configured**.
 
 Request history shows received/checking/searching/enqueuing and a final result. **Enqueue confirmed** does not mean **playing**. A failed write is shown as **Outcome uncertain**; inspect the player before retrying. The player queue is a read-only snapshot. Its displayed tracks are not assigned to viewers. History is bounded to 200 commands and is not persisted between sessions.
+
+## Desktop layout
+
+The console uses original PearConnect artwork, a graphite and pear-green palette, one navigation sidebar and open sections separated by fine rules. Controls have restrained corners; the interface avoids nested cards and floating overlays. The TikFinity reference informed the emphasis on navigation and connection visibility; its assets and visual design were not reused.
+
+**Overview** shows player, chat input and request intake in one status strip. The request control stays available in the top bar on all six pages. Input activity separates the last event, chat message and recognized command. Recent song requests show the latest four results; Requests & queue and Activity show the bounded command history in accessible tables. Queue tracks remain a separate read-only list.
+
+Rules use labeled form sections, Connections makes Simple/Advanced selection visible, and the setup guide follows a numbered sequence. Keyboard navigation includes a skip-to-workspace link, focus indicators and the current navigation item. Layout checks cover the default 1240-pixel window and the 860-pixel minimum width.
+
+![PearConnect Overview with synthetic player and request fixtures](images/desktop-overview.png)
+
+Preview image uses synthetic test data, not a live stream or confirmed playback.
 
 ## Existing installations and Advanced setup
 
