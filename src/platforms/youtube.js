@@ -26,17 +26,18 @@ export function startYouTube({ channelId, commands, queue, skipAllowlist, log })
     const cmd = rawCmd.toLowerCase();
     const args = rest.join(' ');
     const user = item.author?.name || 'viewer';
+    const userId = item.author?.channelId || '';
 
     const reply = (msg) => log.info(`[youtube reply -> ${user}] ${msg}`);
 
     if (cmd === commands.request) {
-      await queue.handleRequest({ user, query: args, platform: 'youtube', reply });
+      await queue.handleRequest({ user, userId, query: args, platform: 'youtube', reply });
     } else if (cmd === commands.nowPlaying) {
       await queue.handleNowPlaying({ user, reply });
     } else if (cmd === commands.queue) {
       await queue.handleQueuePeek({ user, reply });
     } else if (cmd === commands.skip) {
-      await queue.handleSkip({ user, reply, allowlist: skipAllowlist });
+      await queue.handleSkip({ user, userId, platform: 'youtube', reply, allowlist: skipAllowlist });
     }
   });
 

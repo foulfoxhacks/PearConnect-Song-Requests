@@ -1,88 +1,54 @@
-// src/index.js
-// Entrypoint: load config, build the YTMD client + queue manager,
-// start whichever platforms are configured.
 import 'dotenv/config';
+import { loadConfig } from './config.js';
 import { YTMDClient } from './ytmd.js';
 import { QueueManager } from './queue-manager.js';
-import { startTwitch } from './platforms/twitch.js';
-import { startYouTube } from './platforms/youtube.js';
 import { startTikfinity } from './platforms/tikfinity.js';
 
-const log = {
-  info: (...a) => console.log(new Date().toISOString(), ...a),
-  warn: (...a) => console.warn(new Date().toISOString(), ...a),
-  error: (...a) => console.error(new Date().toISOString(), ...a),
-};
+const log = Object.fromEntries(['info', 'warn', 'error'].map((level) =>
+  [level, (...args) => console[level](new Date().toISOString(), ...args)]));
 
-const env = process.env;
-
-if (!env.YTMD_TOKEN) {
-  log.error('YTMD_TOKEN is not set. Run `npm run auth` first to get one.');
-  process.exit(1);
+async function main() {
+  const config = loadConfig({ ...process.env, ...(process.argv.includes('--dry-run') ? { DRY_RUN: 'true' } : {}) });
+  const ytmd = new YTMDClient(config);
+  if (config.dryRun) log.warn('[pearconnect] DRY RUN: no player calls and no Twitch/YouTube connections.');
+  else {
+    await ytmd.getCurrentSong();
+    log.info('[ytmd] connected.');
+  }
+  if (config.port && !config.secret) log.warn('[security] No webhook secret: any local process can call this bridge. Set TIKFINITY_SECRET for normal use.');
+  const queue = new QueueManager({ ...config, ytmd, logger: log, requestCommand: config.commands.request });
+  // Bind first; an occupied port must fail startup, not print a false success.
+  const server = await startTikfinity({ ...config, queue, log });
+  let twitch;
+  let youtube;
+  if (!config.dryRun) {
+    const [{ startTwitch }, { startYouTube }] = await Promise.all([import('./platforms/twitch.js'), import('./platforms/youtube.js')]);
+    const shared = { commands: config.commands, queue, skipAllowlist: config.skipAllowlist, log };
+    twitch = startTwitch({ ...shared, ...config.twitch });
+    youtube = startYouTube({ ...shared, channelId: config.channelId });
+  }
+  log.info('PearConnect Song Requests is running. Press Ctrl+C to quit.');
+  let closing = false;
+  const shutdown = async () => {
+    if (closing) return;
+    closing = true;
+    log.info('[pearconnect] Shutting down.');
+    const forced = setTimeout(() => process.exit(1), 5000);
+    forced.unref();
+    try { youtube?.stop(); } catch { /* Already stopped. */ }
+    const tasks = [];
+    if (twitch) tasks.push(Promise.resolve().then(() => twitch.disconnect()).catch(() => {}));
+    if (server) tasks.push(new Promise((resolve) => server.close(resolve)));
+    await Promise.all(tasks);
+    clearTimeout(forced);
+    process.exitCode = 0;
+  };
+  process.once('SIGINT', shutdown);
+  process.once('SIGTERM', shutdown);
 }
 
-const ytmd = new YTMDClient({
-  host: env.YTMD_HOST || 'http://127.0.0.1:26538',
-  token: env.YTMD_TOKEN,
-});
-
-// Quick sanity ping so misconfig surfaces immediately rather than at first request.
-try {
-  await ytmd.getCurrentSong();
-  log.info('[ytmd] connected.');
-} catch (err) {
-  log.error('[ytmd] connection check failed:', err.message);
-  log.error('Is Pear Desktop running and the API Server plugin enabled? Is YTMD_TOKEN current?');
+main().catch((error) => {
+  if (error.code === 'EADDRINUSE') log.error('TIKFINITY_PORT is already in use. Stop the other bridge or choose another port.');
+  else log.error('[startup]', error.message);
   process.exit(1);
-}
-
-const queue = new QueueManager({
-  ytmd,
-  cooldownSeconds: parseInt(env.COOLDOWN_SECONDS || '60', 10),
-  maxSongSeconds: parseInt(env.MAX_SONG_SECONDS || '420', 10),
-  maxPerUser: parseInt(env.MAX_PER_USER || '2', 10),
-  blocklist: (env.BLOCKLIST || '').split(',').map((s) => s.trim()).filter(Boolean),
-  logger: log,
-});
-
-const commands = {
-  request: (env.CMD_REQUEST || 'sr').toLowerCase(),
-  nowPlaying: (env.CMD_NOWPLAYING || 'np').toLowerCase(),
-  queue: (env.CMD_QUEUE || 'queue').toLowerCase(),
-  skip: (env.CMD_SKIP || 'skip').toLowerCase(),
-};
-
-const skipAllowlist = (env.SKIP_ALLOWLIST || '').split(',').map((s) => s.trim()).filter(Boolean);
-
-startTwitch({
-  channel: env.TWITCH_CHANNEL,
-  username: env.TWITCH_USERNAME,
-  oauth: env.TWITCH_OAUTH,
-  commands,
-  queue,
-  skipAllowlist,
-  log,
-});
-
-startYouTube({
-  channelId: env.YOUTUBE_CHANNEL_ID,
-  commands,
-  queue,
-  skipAllowlist,
-  log,
-});
-
-startTikfinity({
-  port: parseInt(env.TIKFINITY_PORT || '7280', 10),
-  secret: env.TIKFINITY_SECRET,
-  queue,
-  skipAllowlist,
-  log,
-});
-
-log.info('ytmd-stream-integration is running. Press Ctrl+C to quit.');
-
-process.on('SIGINT', () => {
-  log.info('Shutting down.');
-  process.exit(0);
 });

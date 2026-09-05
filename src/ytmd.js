@@ -7,44 +7,62 @@
 const API = '/api/v1';
 
 export class YTMDClient {
-  constructor({ host, token }) {
+  constructor({ host, token, timeoutMs = 10000 }) {
     if (!host) throw new Error('YTMDClient: host is required');
     this.host = host.replace(/\/+$/, '');
     this.token = token || '';
+    if (!Number.isInteger(timeoutMs) || timeoutMs < 1) throw new Error('timeoutMs must be a positive integer');
+    this.timeoutMs = timeoutMs;
   }
 
-  /**
-   * Request a JWT for the given clientId.
-   * The user must approve the popup in Pear Desktop the first time.
-   * Returns the access token string.
-   */
-  static async requestToken({ host, clientId }) {
-    const url = `${host.replace(/\/+$/, '')}/auth/${encodeURIComponent(clientId)}`;
-    const res = await fetch(url, { method: 'POST' });
-    if (!res.ok) {
-      throw new Error(`Auth failed (${res.status}). Did you click "Allow" in Pear Desktop?`);
+  static async requestToken({ host, clientId, timeoutMs = 120000 }) {
+    const client = new YTMDClient({ host, timeoutMs });
+    const body = await client.#req('POST', `/auth/${encodeURIComponent(clientId)}`);
+    if (!body || typeof body.accessToken !== 'string' || !body.accessToken) {
+      throw new Error('Auth response missing accessToken');
     }
-    const body = await res.json();
-    if (!body.accessToken) throw new Error('Auth response missing accessToken');
     return body.accessToken;
   }
 
   async #req(method, path, body) {
-    const res = await fetch(`${this.host}${path}`, {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    if (res.status === 204) return null;
-    if (!res.ok) {
-      const text = await res.text().catch(() => '');
-      throw new Error(`YTMD ${method} ${path} -> ${res.status} ${text}`);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
+    timer.unref?.();
+    try {
+      const res = await fetch(`${this.host}${path}`, {
+        method,
+        redirect: 'error',
+        signal: controller.signal,
+        headers: {
+          Accept: 'application/json',
+          ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+          ...(this.token ? { Authorization: `Bearer ${this.token}` } : {}),
+        },
+        body: body === undefined ? undefined : JSON.stringify(body),
+      });
+      // Never echo remote bodies, tokens, or authentication URLs into logs.
+      if (!res.ok) {
+        await res.body?.cancel();
+        const error = new Error(`Pear Desktop API returned HTTP ${res.status}. Check authentication and API compatibility.`);
+        error.status = res.status;
+        throw error;
+      }
+      if (res.status === 204) return null;
+      if (!(res.headers.get('content-type') || '').includes('application/json')) {
+        await res.body?.cancel();
+        throw new Error('Pear Desktop returned a non-JSON response. Check YTMD_HOST and the API Server plugin.');
+      }
+      return await res.json();
+    } catch (error) {
+      if (controller.signal.aborted) {
+        const timeout = new Error('Pear Desktop request timed out. Check the queue before retrying a write.');
+        timeout.code = 'UPSTREAM_TIMEOUT';
+        throw timeout;
+      }
+      throw error;
+    } finally {
+      clearTimeout(timer);
     }
-    const ct = res.headers.get('content-type') || '';
-    return ct.includes('application/json') ? res.json() : res.text();
   }
 
   // --- Search ---
@@ -108,25 +126,31 @@ export function extractFirstSong(data) {
       if (!videoId) return;
       const title = textFromRuns(r.flexColumns?.[0]);
       const artistish = textFromRuns(r.flexColumns?.[1]);
-      const durationSec = parseDurationFromColumns(r.flexColumns);
+      const durationSec = parseDurationFromColumns([...(r.fixedColumns || []), ...(r.flexColumns || [])]);
       found.push({ videoId, title: title || '(unknown)', artist: artistish || '', durationSec });
     }
   });
   return found[0] || null;
 }
 
-function walk(node, visit, seen = new WeakSet()) {
-  if (!node || typeof node !== 'object') return;
-  if (seen.has(node)) return;
-  seen.add(node);
-  visit(node);
-  for (const key of Object.keys(node)) {
-    walk(node[key], visit, seen);
+function walk(node, visit) {
+  const stack = [node];
+  const seen = new WeakSet();
+  let visited = 0;
+  while (stack.length) {
+    const item = stack.pop();
+    if (!item || typeof item !== 'object' || seen.has(item)) continue;
+    if (++visited > 50000) throw new Error('YouTube Music search response is too complex.');
+    seen.add(item);
+    visit(item);
+    const values = Object.values(item);
+    for (let i = values.length - 1; i >= 0; i--) stack.push(values[i]);
   }
 }
 
 function textFromRuns(column) {
   const runs =
+    column?.musicResponsiveListItemFixedColumnRenderer?.text?.runs ||
     column?.musicResponsiveListItemFlexColumnRenderer?.text?.runs ||
     column?.text?.runs;
   if (!Array.isArray(runs)) return '';
@@ -138,7 +162,7 @@ function parseDurationFromColumns(columns) {
   for (const col of columns) {
     const txt = textFromRuns(col);
     const m = txt.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
-    if (m) {
+    if (m && +m[2] < 60 && (!m[3] || +m[3] < 60)) {
       const a = +m[1], b = +m[2], c = m[3] ? +m[3] : null;
       return c == null ? a * 60 + b : a * 3600 + b * 60 + c;
     }

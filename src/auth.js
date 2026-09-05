@@ -2,9 +2,12 @@
 // One-shot script: ask Pear Desktop for a token, print it, exit.
 // Run with: npm run auth
 import 'dotenv/config';
+import { apiHost } from './config.js';
 import { YTMDClient } from './ytmd.js';
 
-const host = process.env.YTMD_HOST || 'http://127.0.0.1:26538';
+let host;
+try { host = apiHost(process.env.YTMD_HOST || undefined); }
+catch (error) { console.error(error.message); process.exit(1); }
 const clientId = process.env.YTMD_CLIENT_ID || 'ytmd-stream-bot';
 
 console.log(`Requesting token from ${host} for client "${clientId}"...`);
