@@ -1,6 +1,7 @@
 const api = window.pearconnect;
 const $ = selector => document.querySelector(selector);
 let snapshot, initialized = false, busy = false, previewReady = false;
+let verificationStep = 1;
 const labels = { ready: 'Connected', not_configured: 'Authorization needed', disconnected: 'Disconnected', unauthorized: 'Authorization expired', awaiting_authorization: 'Awaiting approval', dry_run: 'Dry run', connecting: 'Connecting…', reconnecting: 'Reconnecting…', connected_waiting_for_chat: 'Connected · waiting', chat_received: 'Chat arriving', webhook_listening: 'Webhook listening', disabled: 'Disabled', enqueue_confirmed: 'Enqueue confirmed', outcome_uncertain: 'Outcome uncertain', requests_paused: 'Requests paused', received: 'Received', checking: 'Checking', searching: 'Searching', enqueuing: 'Enqueuing', completed: 'Completed', rejected: 'Rejected', failed: 'Failed', tiktok: 'TikTok', twitch: 'Twitch', youtube: 'YouTube', simple: 'TikFinity', advanced: 'Streamer.bot' };
 const label = value => labels[value] || String(value || 'unknown').replaceAll('_', ' ');
 const when = value => value ? new Date(value).toLocaleTimeString() : 'never';
@@ -11,6 +12,7 @@ const pages = {
   connections: ['CONFIGURATION', 'Connections', 'Bring your player and your stream together.'],
   activity: ['SUPPORT', 'Activity & diagnostics', 'Understand each result and find the details when you need them.'],
   setup: ['GETTING STARTED', 'Ready for your first request?', 'Connect your music, bring in your chat and make the rules yours.']
+  ,session: ['OPTIONAL FALLBACK', 'A code for your stream.', 'A temporary request link, checked by your desktop.']
 };
 function notice(message, error = false) {
   $('#notice').hidden = false;
@@ -77,8 +79,22 @@ function queue(tracks) {
   });
 }
 function render(value, forms = false) {
+  renderVerification(value);
+  const session = value.session;
+  $('#session-create-form').hidden = !!session && !session.ended && session.state !== 'expired';
+  $('#session-controls').hidden = !session || session.ended || session.state === 'expired';
+  if (session) {
+    $('#session-code').textContent = session.code;
+    $('#session-status').textContent = session.message;
+    $('#session-expiry').textContent = `Expires ${new Date(session.expiresAt).toLocaleString()}.`;
+    $('#session-toggle').textContent = value.status.requestsEnabled ? 'Pause website requests' : 'Enable website requests';
+  }
+  if (!initialized) {
+    $('#session-create-form').elements.minutes.value = value.sessionMinutes;
+    $('#session-expiry-form').elements.minutes.value = value.sessionMinutes;
+  }
   snapshot = value; const s = value.status;
-  $('#mode-label').textContent = s.connectionMode === 'simple' ? 'Simple connection' : 'Advanced connection';
+  $('#mode-label').textContent = s.webFallback ? 'Session-code fallback' : s.connectionMode === 'simple' ? 'Simple connection' : 'Advanced connection';
   $('#connection-current').textContent = $('#mode-label').textContent;
   $('#player-state').textContent = label(s.player);
   $('#input-state').textContent = label(s.input.state);
@@ -124,6 +140,7 @@ async function call(name, payload, formUpdate = false) {
     const result = await api[name](payload);
     if (!result.ok) throw new Error(result.error);
     const value = result.value;
+    if (name === 'beginVerification') verificationStep = 1;
     if (value?.status) render(value, formUpdate);
     if (value?.message) notice(value.message, value.ok === false);
     else if (name === 'testPlayer') notice(value.status.player === 'ready' ? 'Pear Desktop is reachable. Playback was not changed.' : `Player test: ${label(value.status.player)}.`, !['ready', 'dry_run'].includes(value.status.player));
@@ -132,17 +149,44 @@ async function call(name, payload, formUpdate = false) {
     if (name === 'previewDiagnostics') { $('#diagnostic-preview').hidden = false; $('#diagnostic-preview').textContent = value.preview; previewReady = true; }
     if (name === 'exportDiagnostics') previewReady = false;
     if (name === 'playerQueue') { $('#queue-note').textContent = value.message; queue(value.tracks); }
+    if (name === 'verifySong') { const fresh = await api.snapshot(); if (fresh.ok) render(fresh.value); }
+    if (name === 'finishVerification') { notice('Guided checks passed. Requests are enabled. Watch the activity feed for your first enqueue confirmation.'); view('dashboard'); }
     return value;
   } catch (error) { notice(error.message || 'Operation failed.', true); }
-  finally { busy = false; document.querySelectorAll('button:not([data-view])').forEach(button => { button.disabled = false; }); $('#export-report').disabled = !previewReady; }
+  finally { busy = false; document.querySelectorAll('button:not([data-view])').forEach(button => { button.disabled = false; }); $('#export-report').disabled = !previewReady; if (snapshot) renderVerification(snapshot); }
 }
+
+function renderVerification(value) {
+  const v = value.status.verification;
+  const active = v && v.state !== 'complete';
+  $('#verify-intro').hidden = !!active;
+  $('#verify-active').hidden = !active;
+  $('#verify-progress').textContent = v?.state === 'complete' ? 'CHECKS PASSED' : active ? `STEP ${verificationStep} OF 4` : 'GUIDED TEST';
+  document.querySelectorAll('[data-verify-step]').forEach(el => { el.hidden = Number(el.dataset.verifyStep) !== verificationStep; });
+  document.querySelectorAll('[data-checkpoint]').forEach(el => { if (Number(el.dataset.checkpoint) === verificationStep) el.setAttribute('aria-current', 'step'); else el.removeAttribute('aria-current'); });
+  if (!active) return;
+  $('#verify-player').textContent = v.playerPassed ? 'Passed · Pear Desktop responded.' : `Not passed · ${label(value.status.player)}. A dry run does not verify a real player.`;
+  $('#verify-command').textContent = v.command;
+  $('#verify-route').textContent = v.mode === 'simple' ? 'Simple: TikFinity Desktop must be running on this computer and connected to your LIVE. No actions or overlay are needed.' : 'Advanced: import the PearConnect Streamer.bot package and set its URL and secret. In TikFinity, create an action using “Streamer.bot Action” → PearConnect Song Request. Create an event using “Commenting a command” and link that action.';
+  $('#verify-delivery').textContent = v.state === 'received' ? `Passed · live test command received at ${when(v.receivedAt)}.` : v.state === 'expired' ? 'Test expired after five minutes. Restart the test and send the new command.' : v.state === 'interrupted' ? 'The chat connection was interrupted after verification. Reconnect and restart the test.' : 'Waiting for this exact live command. An open socket or a local endpoint test does not complete this step.';
+  $('#verify-help').textContent = v.mode === 'simple' ? 'Check that TikFinity is connected to the correct livestream. Check the event WebSocket address in Connections and send a new comment in the live chat.' : `Use the command !${value.rules.CMD_REQUEST} in TikFinity’s event. Allow the test viewer to trigger it, and select the Song Request action under “Trigger all of these actions.” PearConnect.Url must be the origin without /tikfinity. The request text must reach PearConnect as the query, without the command prefix.`;
+  $('#verify-rules').textContent = v.rulesMessage || 'Waiting for a sample song check.';
+  $('#verify-back').disabled = busy || verificationStep === 1;
+  $('#verify-next').hidden = verificationStep === 4;
+  $('#verify-next').disabled = busy || !(verificationStep === 1 ? v.playerPassed : verificationStep === 2 ? v.state === 'received' : v.rulesPassed);
+  $('[data-action="finishVerification"]').disabled = busy || !v.playerPassed || v.state !== 'received' || !v.rulesPassed;
+}
+$('#verify-next').addEventListener('click', () => { verificationStep = Math.min(4, verificationStep + 1); renderVerification(snapshot); $('#verify-progress').scrollIntoView({ block: 'center' }); });
+$('#verify-back').addEventListener('click', () => { verificationStep = Math.max(1, verificationStep - 1); renderVerification(snapshot); });
+$('#session-toggle').addEventListener('click', () => call('updateSession', { enabled: !snapshot.status.requestsEnabled }));
+$('#session-unpair').addEventListener('click', () => call('updateSession', { unpair: true }));
 
 // Focus the workspace without changing the URL used to authenticate desktop IPC.
 $('.skip-link').addEventListener('click', event => { event.preventDefault(); $('#main-content').focus(); window.scrollTo(0, 0); });
 document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => view(button.dataset.view)));
 document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => call(button.dataset.action)));
 document.querySelectorAll('[data-mode]').forEach(button => button.addEventListener('click', () => call('mode', button.dataset.mode, true)));
-for (const [id, operation] of [['rules-form', 'rules'], ['connections-form', 'connections'], ['sample-form', 'testRequest']]) {
+for (const [id, operation] of [['rules-form', 'rules'], ['connections-form', 'connections'], ['sample-form', 'testRequest'], ['verify-song-form', 'verifySong'], ['session-create-form', 'createSession'], ['session-expiry-form', 'updateSession']]) {
   $(`#${id}`).addEventListener('submit', event => { event.preventDefault(); call(operation, Object.fromEntries(new FormData(event.currentTarget)), true); });
 }
 async function refresh() { if (busy || document.hidden) return; try { const result = await api.snapshot(); if (result.ok) render(result.value); } catch { /* A closing window needs no retry action. */ } }

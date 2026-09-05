@@ -19,6 +19,7 @@
       <span class="nav-label">Workspace</span>
       <button data-view="dashboard" class="selected" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>Overview</button>
       <button data-view="requests"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h11M4 12h8M4 18h6M17 11v9M17 11l4-1v8M17 20c-4 2-6-2-2-3h2M21 18c-3 2-5-2-2-3h2"/></svg>Requests &amp; queue</button>
+      <button data-view="session"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3 6 21M18 3l-2 18M3 8h18M2 16h18"/></svg>Session-code fallback</button>
       <span class="nav-label">Configuration</span>
       <button data-view="rules"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9m4 0h3M4 17h3m4 0h9M13 4v6M7 14v6"/></svg>Request rules</button>
       <button data-view="connections"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3v5m8-5v5M5 8h14v3a7 7 0 0 1-14 0V8Zm7 10v4"/></svg>Connections</button>
@@ -67,6 +68,20 @@
       </section>
 
       <section data-page="setup" hidden aria-label="Setup guide">
+        <section class="guided-test" aria-label="Interactive connection validation">
+          <div class="section-title"><h2>Prove the connection, one step at a time.</h2><span class="section-meta" id="verify-progress">GUIDED TEST</span></div>
+          <p>Keep music playing while you test. Requests pause during validation; the test command never adds a song.</p>
+          <div id="verify-intro"><button class="primary" data-action="beginVerification">Start guided test</button><p class="field-note">Choose Simple or Advanced in the setup reference below first. You’ll need a live TikTok chat to verify delivery.</p></div>
+          <div id="verify-active" hidden>
+            <ol class="checkpoint-list" aria-label="Validation checkpoints"><li data-checkpoint="1">Player</li><li data-checkpoint="2">Live command</li><li data-checkpoint="3">Song &amp; rules</li><li data-checkpoint="4">Enable</li></ol>
+            <div data-verify-step="1"><h3>1. Connect and authorize the player</h3><p>Open Pear Desktop, enable the API Server plugin, then approve PearConnect. This check only reads the current track.</p><p class="verification-result" id="verify-player" role="status"></p><div class="button-row"><button data-action="authorize">Authorize PearConnect</button><button data-action="testPlayer">Check player connection</button></div></div>
+            <div data-verify-step="2" hidden><h3>2. Send a real command from your livestream</h3><p id="verify-route"></p><p>Copy this exact command and send it in your TikTok LIVE chat. PearConnect will catch it safely before searching or queuing anything.</p><div class="test-command"><code id="verify-command"></code><button data-action="copyTestCommand">Copy command</button></div><p id="verify-delivery" class="verification-result" role="status"></p><details class="connection-details"><summary>Command isn’t arriving?</summary><p id="verify-help"></p><p>The local “Test integration” button checks the local endpoint only. It does not prove that TikFinity sent this chat command. Overlay warnings in TikFinity relate to its visual actions; PearConnect song requests do not require an OBS overlay.</p><button class="link-button" data-view="session">Use the optional session-code fallback →</button></details></div>
+            <div data-verify-step="3" hidden><h3>3. Search a song without adding it</h3><p>Use a viewer who is allowed by your rules. This reads a real search result and checks its title, artist and duration. It does not enqueue music or consume cooldowns and request slots.</p><form id="verify-song-form" class="form-grid"><label>Viewer handle<input name="user" required maxlength="100" placeholder="Your TikTok handle"></label><label>Artist and song<input name="query" required maxlength="512" placeholder="Björk Jóga"></label><div class="wide"><button>Check song and rules</button></div></form><p id="verify-rules" class="verification-result" role="status"></p><button class="link-button" data-view="rules">Review request rules →</button></div>
+            <div data-verify-step="4" hidden><h3>4. Ready to accept requests</h3><p>The player responded, your live request command arrived, and a sample song passed the rules. This does not verify TikTok chat replies, skipping, or actual enqueue playback.</p><p>Enable requests, then have a viewer send their first song. Look for <strong>Enqueue confirmed</strong> in your activity feed; playback starts when the player reaches that track.</p><button class="primary" data-action="finishVerification">Finish test &amp; enable requests</button></div>
+            <div class="verification-navigation"><button id="verify-back" class="text-button">Back</button><button data-action="beginVerification" class="text-button">Restart test</button><button id="verify-next">Continue →</button></div>
+          </div>
+        </section>
+        <details class="connection-details"><summary>Setup reference &amp; manual controls</summary>
         <div class="steps">
           <section class="step"><span class="number">01</span><div><h2>Choose your connection</h2><p>Same request rules. Two ways to bring your stream into PearConnect.</p><div class="mode-options"><button data-mode="simple" class="mode-choice"><span class="choice-heading">Simple <span class="recommended">RECOMMENDED</span></span><strong>TikFinity Connection</strong><span>Receive chat directly from TikFinity Desktop.</span></button><button data-mode="advanced" class="mode-choice"><span class="choice-heading">Advanced</span><strong>Streamer.bot &amp; Automation</strong><span>Keep your custom actions and event workflows.</span></button></div></div></section>
           <section class="step"><span class="number">02</span><div><h2>Connect your music</h2><p>Open Pear Desktop and enable its API Server plugin. Approve PearConnect in the player to save your connection securely.</p><div class="button-row"><button data-action="authorize" class="primary">Authorize PearConnect</button><button data-view="connections" class="text-button">Player settings <span aria-hidden="true">→</span></button></div></div></section>
@@ -75,6 +90,22 @@
           <section class="step"><span class="number">05</span><div><h2>Try a safe test</h2><p>Check a sample request without contacting the player or using a request slot. Search results and song duration are checked on real requests.</p><form id="sample-form" class="form-grid"><label>Viewer handle<input name="user" value="test_viewer" required maxlength="100"></label><label>Artist and song<input name="query" value="Björk Jóga" maxlength="512" required></label><div class="wide"><button>Validate sample request</button></div></form></div></section>
           <section class="step"><span class="number">06</span><div><h2>Open the requests</h2><p>Test your player connection first, then enable requests when you’re ready. You can pause new requests at any time from the top bar.</p><button data-action="resume" class="primary">Enable requests</button></div></section>
         </div>
+        </details>
+      </section>
+
+      <section data-page="session" hidden aria-label="Session-code fallback">
+        <div class="session-intro"><span class="eyebrow">WHEN CHAT COMMANDS WON’T CONNECT</span><h2>Keep your community in the queue.</h2><p>Create a temporary code that viewers can use on the PearConnect website. Your desktop stays open and checks every song through the same request engine.</p></div>
+        <div class="warning">This selects website requests as your TikTok fallback. TikTok commands are suspended until you end the session; Twitch and YouTube stay independent. Pausing requests leaves existing music playing.</div>
+        <form id="session-create-form" class="form-grid"><label>Code expires after <span class="unit">minutes</span><input name="minutes" type="number" min="15" max="1440" value="240" required><small>15 minutes to 24 hours. You can adjust the expiry while the session is active.</small></label><div class="wide"><button class="primary">Create fallback code</button></div></form>
+        <section id="session-controls" hidden>
+          <div class="session-code-row"><div><span class="label">VIEWER SESSION CODE</span><strong id="session-code"></strong></div><button data-action="copySessionLink">Copy viewer link</button></div>
+          <p id="session-status" class="verification-result" role="status"></p><p id="session-expiry"></p>
+          <div class="button-row"><button id="session-toggle" class="primary">Enable website requests</button><button data-action="pairDashboard">Open &amp; pair web dashboard</button><button data-action="endSession">End session &amp; return to chat</button></div>
+          <form id="session-expiry-form" class="form-grid"><label>Set a new expiry from now <span class="unit">minutes</span><input name="minutes" type="number" min="15" max="1440" value="240" required></label><div class="wide"><button>Update expiration</button></div></form>
+          <button id="session-unpair" class="text-button">Disconnect paired browser</button>
+        </section>
+        <div class="settings-section"><div class="settings-heading"><h2>What your viewers should expect</h2></div><div><ol><li>Visit pearconnect.mellozone.site/sessioncode and enter your code.</li><li>Enter a display name and an artist and song.</li><li>Wait for the result. “Received” is not a queue confirmation.</li></ol><p>Website names are unverified. A restricted request allowlist disables this fallback. Website cooldowns and limits use a private identifier derived from the viewer’s network connection, so people sharing a connection share those limits. TikTok and website identities cannot be combined reliably.</p><p>Only submitted requests go through the relay. Player tokens remain on this computer. Closing Desktop ends the session when connected; after an abrupt disconnect, the relay stops accepting requests and the code expires at its deadline.</p></div></div>
+        <button class="link-button" data-view="setup">Return to the guided command test →</button>
       </section>
 
       <section data-page="requests" hidden aria-label="Requests and player queue">

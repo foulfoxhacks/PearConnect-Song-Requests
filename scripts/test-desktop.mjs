@@ -5,6 +5,7 @@ import electron from 'electron';
 await mkdir('dist/desktop-test', { recursive: true });
 const dataDir = await mkdtemp(resolve('dist/desktop-test/run-'));
 const childEnv = { ...process.env }; delete childEnv.ELECTRON_RUN_AS_NODE;
+if (process.platform === 'win32') childEnv.USERPROFILE = dataDir;
 const child = spawn(electron, [resolve('test/desktop/harness.mjs'), dataDir], { stdio: 'inherit', windowsHide: true, env: childEnv });
 const timer = setTimeout(() => { child.kill(); process.exitCode = 1; }, 45000);
 child.on('error', error => { console.error(error.message); clearTimeout(timer); process.exitCode = 1; });

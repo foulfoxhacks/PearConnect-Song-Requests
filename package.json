@@ -1,6 +1,6 @@
 {
   "name": "pearconnect-song-requests",
-  "version": "0.3.0-beta.1",
+  "version": "0.3.0-beta.2",
   "description": "Shared song-request engine for Pear Desktop with Simple TikFinity, Advanced Streamer.bot, desktop and CLI interfaces.",
   "main": "src/index.js",
   "type": "module",

@@ -7,12 +7,13 @@ import { RULE_KEYS } from '../src/engine.js';
 
 export const CONNECTION_KEYS = ['YTMD_HOST', 'YTMD_CLIENT_ID', 'YTMD_TIMEOUT_MS', 'TIKFINITY_WS_URL', 'TIKFINITY_PORT', 'TWITCH_CHANNEL', 'TWITCH_USERNAME', 'YOUTUBE_CHANNEL_ID'];
 export const SECRET_KEYS = ['YTMD_TOKEN', 'TIKFINITY_SECRET', 'TWITCH_OAUTH'];
-export const SETTING_KEYS = [...CONNECTION_KEYS, ...SECRET_KEYS, ...RULE_KEYS, 'CONNECTION_MODE', 'REQUESTS_ENABLED', 'DRY_RUN'];
+export const SETTING_KEYS = [...CONNECTION_KEYS, ...SECRET_KEYS, ...RULE_KEYS, 'CONNECTION_MODE', 'REQUESTS_ENABLED', 'DRY_RUN', 'SESSION_MINUTES'];
 
 export function validateSettings(env) {
   if (!env || typeof env !== 'object' || Array.isArray(env) || Object.keys(env).some(key => !SETTING_KEYS.includes(key)) || Object.values(env).some(value => typeof value !== 'string' || value.length > 4096)) throw new InputError('Invalid desktop settings.');
   // The desktop only authorizes a local player. Do not send credentials to a remote host.
   const config = loadConfig(env, { allowUnconfigured: true });
+  if (env.SESSION_MINUTES !== undefined && (!/^\d+$/.test(env.SESSION_MINUTES) || Number(env.SESSION_MINUTES) < 15 || Number(env.SESSION_MINUTES) > 1440)) throw new InputError('Session expiration must be 15 to 1440 minutes.');
   if (!['127.0.0.1', 'localhost', '[::1]'].includes(new URL(config.host).hostname)) throw new InputError('Pear Desktop must use a localhost address.');
   return config;
 }

@@ -3,6 +3,10 @@ const call = (operation, payload) => ipcRenderer.invoke('pearconnect', operation
 // No raw IPC, HTTP, filesystem, shell, credential read or arbitrary command API.
 contextBridge.exposeInMainWorld('pearconnect', Object.freeze({
   snapshot: () => call('snapshot'), testPlayer: () => call('testPlayer'), authorize: () => call('authorize'),
+  beginVerification: () => call('beginVerification'), verifySong: value => call('verifySong', value), finishVerification: () => call('finishVerification'),
+  copyTestCommand: () => call('copyTestCommand'),
+  createSession: values => call('createSession', values), updateSession: values => call('updateSession', values),
+  endSession: () => call('endSession'), pairDashboard: () => call('pairDashboard'), copySessionLink: () => call('copySessionLink'),
   pause: () => call('pause'), resume: () => call('resume'), mode: value => call('mode', value),
   rules: values => call('rules', values), connections: values => call('connections', values),
   testRequest: values => call('testRequest', values), playerQueue: () => call('playerQueue'),

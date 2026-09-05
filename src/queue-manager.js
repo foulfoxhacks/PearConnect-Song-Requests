@@ -48,7 +48,7 @@ export class QueueManager {
 
   #blocked(value) { return this.blocklist.some((b) => value.toLowerCase().includes(b)); }
 
-  async handleRequest({ user, userId = '', query, platform = 'tiktok', reply, canMutate = () => true, onStage = () => {} }) {
+  async handleRequest({ user, userId = '', query, platform = 'tiktok', reply, canMutate = () => true, onStage = () => {}, preview = false, beforeEnqueue }) {
     try {
       ({ user, userId } = this.#cleanIdentity(user, userId));
       query = text(query ?? '', 'query', { optional: true });
@@ -90,6 +90,10 @@ export class QueueManager {
       if (this.maxSongSeconds > 0 && song.durationSec > this.maxSongSeconds) {
         return this.#reply(reply, false, 'too_long', `@${user} "${song.title}" is too long (max ${formatDur(this.maxSongSeconds)}).`);
       }
+      if (preview) return this.#reply(reply, true, 'preview_passed', `Found “${song.title}” by ${song.artist}. Song and duration rules passed. Nothing was queued and no request slot was used.`);
+      // A remote session may expire or be revoked while the local player is searching.
+      if (beforeEnqueue && !await beforeEnqueue()) return this.#reply(reply, false, 'session_changed', 'The session expired, paused or disconnected while searching. Nothing was queued.');
+      if (!canMutate()) return this.#reply(reply, false, 'intake_changed', 'Request intake changed. Nothing was queued.');
       onStage('enqueuing');
       writeStarted = true;
       await this.ytmd.addToQueue(song.videoId);

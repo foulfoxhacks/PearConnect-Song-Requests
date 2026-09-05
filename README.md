@@ -1,8 +1,10 @@
 # PearConnect Song Requests
 
-Local-first song requests for **Pear Desktop**, with a **desktop console or CLI** and two TikTok connection modes. The `0.3.0-beta.1` preview adds direct TikFinity events and graphical setup; live-platform and fresh-machine acceptance remain outstanding.
+Local-first song requests for **Pear Desktop**, with a **desktop console or CLI** and two TikTok connection modes. The `0.3.0-beta.2` preview adds guided live-command validation and an optional expiring website request code; live-platform and fresh-machine acceptance remain outstanding.
 
-**[Website and Windows download](https://pearconnect.mellozone.site/)** · **[Documentation](https://pearconnect.mellozone.site/docs/)** · [Preview release notes](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/tag/v0.3.0-beta.1)
+**[Website and Windows download](https://pearconnect.mellozone.site/)** · **[Documentation](https://pearconnect.mellozone.site/docs/)** · [Preview release notes](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/tag/v0.3.0-beta.2)
+
+Start in **Setup guide → Start guided test** to verify the player, a unique live chat command and a read-only song search. If TikTok commands cannot connect, **Session-code fallback** creates a temporary code for [website requests](https://pearconnect.mellozone.site/sessioncode). Expiration is configurable from 15 minutes to 24 hours in Desktop or the [paired web dashboard](https://pearconnect.mellozone.site/web/dashboard). The fallback suspends TikTok command intake and cannot bypass restricted request allowlists. See the [session guide](https://pearconnect.mellozone.site/docs/session-codes) for identity and delivery limits.
 
 The public website and searchable documentation live in [`website/`](website/README.md) and deploy to Cloudflare Pages. The song-request engine continues to run locally.
 

@@ -3,19 +3,21 @@ import { PearConnectEngine, validateRuleUpdates } from '../src/engine.js';
 import { YTMDClient } from '../src/ytmd.js';
 import { InputError } from '../src/validation.js';
 import { validateSettings, CONNECTION_KEYS } from './settings.js';
+import { SessionClient } from '../src/session-client.js';
 
 export class DesktopController {
-  constructor(store, { engineOptions = {} } = {}) { this.store = store; this.engineOptions = engineOptions; this.busy = false; }
+  constructor(store, { engineOptions = {}, sessionOptions = {} } = {}) { this.store = store; this.engineOptions = engineOptions; this.sessionOptions = sessionOptions; this.busy = false; }
   async init() {
     this.env = await this.store.read() || { CONNECTION_MODE: 'simple', REQUESTS_ENABLED: 'false', TIKFINITY_SECRET: randomBytes(32).toString('hex') };
     const config = validateSettings(this.env);
     config.requestsEnabled = false; // Every desktop launch requires deliberate enable, including migration.
     this.engine = new PearConnectEngine(config, this.engineOptions);
+    this.session = new SessionClient(this.engine, this.sessionOptions);
     try { await this.engine.start(); } catch (error) { this.startupError = error.code === 'ENGINE_RUNNING' ? error.message : 'Could not start the engine. Check the webhook port in Connections and retry.'; }
     return this.snapshot();
   }
   snapshot() {
-    return { status: this.engine.status(), rules: this.engine.ruleValues(),
+    return { status: this.engine.status(), rules: this.engine.ruleValues(), session: this.session?.snapshot(), sessionMinutes: this.env.SESSION_MINUTES || '240',
       connections: Object.fromEntries(CONNECTION_KEYS.map(key => [key, this.env[key] || ({ YTMD_HOST: this.engine.config.host, YTMD_CLIENT_ID: this.engine.config.clientId, YTMD_TIMEOUT_MS: String(this.engine.config.timeoutMs), TIKFINITY_WS_URL: this.engine.config.websocketUrl, TIKFINITY_PORT: String(this.engine.config.port) }[key] || '')])),
       hasPlayerCredential: !!this.env.YTMD_TOKEN, hasTwitchCredential: !!this.env.TWITCH_OAUTH,
       secureStorage: this.store.encryptionAvailable(), startupError: this.startupError || null };
@@ -38,6 +40,7 @@ export class DesktopController {
   async changeMode(mode) {
     return this.serialized(async () => {
       if (!['simple', 'advanced'].includes(mode)) throw new InputError('Choose Simple or Advanced.');
+      if (this.session?.info) await this.session.close();
       const next = { ...this.env, CONNECTION_MODE: mode, REQUESTS_ENABLED: 'false' };
       await this.store.write(next); this.env = next;
       await this.engine.setMode(mode); return this.snapshot();
@@ -46,6 +49,7 @@ export class DesktopController {
   async reconfigure(next) {
     const config = validateSettings(next); config.requestsEnabled = false;
     await this.store.write(next);
+    await this.session?.close();
     await this.engine.stop();
     this.env = next;
     // Preserve the QueueManager and its counters/history while replacing connections.
@@ -69,12 +73,15 @@ export class DesktopController {
   }
   async authorize() {
     return this.serialized(async () => {
+      const guided = !!this.engine.verification;
       if (!this.store.encryptionAvailable()) throw new InputError('Restore secure credential storage before authorizing.');
       this.engine.playerState = 'awaiting_authorization'; this.engine.changed();
       let token;
       try { token = await YTMDClient.requestToken({ host: this.engine.config.host, clientId: this.engine.config.clientId }); }
       catch { this.engine.playerState = 'disconnected'; throw new InputError('Authorization failed or timed out. Open Pear Desktop, enable the API Server plugin and approve PearConnect.'); }
-      return this.reconfigure({ ...this.env, YTMD_TOKEN: token, REQUESTS_ENABLED: 'false' });
+      await this.reconfigure({ ...this.env, YTMD_TOKEN: token, REQUESTS_ENABLED: 'false' });
+      if (guided && this.engine.lifecycle === 'running') this.engine.beginVerification();
+      return this.snapshot();
     });
   }
   async rotateSecret() {
@@ -84,4 +91,33 @@ export class DesktopController {
     return this.serialized(async () => this.reconfigure({ ...values, CONNECTION_MODE: values.CONNECTION_MODE || 'advanced', REQUESTS_ENABLED: 'false' }));
   }
   async reconnect() { return this.serialized(() => this.reconfigure({ ...this.env, REQUESTS_ENABLED: 'false' })); }
+  async createSession(values) {
+    return this.serialized(async () => {
+      const duration = Number(values?.minutes);
+      if (!Number.isInteger(duration) || duration < 15 || duration > 1440) throw new InputError('Choose 15 to 1440 minutes.');
+      const next = { ...this.env, SESSION_MINUTES: String(duration) };
+      await this.store.write(next); this.env = next;
+      await this.session.create(duration); return this.snapshot();
+    });
+  }
+  async updateSession(values) {
+    return this.serialized(async () => {
+      if (!values || typeof values !== 'object' || Array.isArray(values) || Object.keys(values).some(k => !['minutes', 'enabled', 'unpair'].includes(k))) throw new InputError('Unsupported session setting.');
+      const update = { ...values };
+      if (update.minutes !== undefined) {
+        update.minutes = Number(update.minutes);
+        if (!Number.isInteger(update.minutes) || update.minutes < 15 || update.minutes > 1440) throw new InputError('Choose 15 to 1440 minutes.');
+        const next = { ...this.env, SESSION_MINUTES: String(update.minutes) }; await this.store.write(next); this.env = next;
+      }
+      await this.session.update(update); return this.snapshot();
+    });
+  }
+  async intake(enabled) {
+    if (!enabled) this.engine.pauseRequests();
+    if (this.session?.info && !this.session.stopped) await this.session.update({ enabled });
+    else if (enabled) this.engine.resumeRequests();
+    return this.snapshot();
+  }
+  async endSession() { return this.serialized(async () => { await this.session.close(); return this.snapshot(); }); }
+  async stop() { await this.session?.close(); await this.engine.stop(); }
 }

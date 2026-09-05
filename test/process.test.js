@@ -7,7 +7,10 @@ import { join } from 'node:path';
 import { serve } from './helpers.js';
 import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../', import.meta.url));
-const cleanEnv = { ...process.env, YTMD_TOKEN: '', DRY_RUN: 'false', TIKFINITY_PORT: '0', TIKFINITY_SECRET: '', TWITCH_CHANNEL: '', YOUTUBE_CHANNEL_ID: '' };
+// Run these CLI fixtures under a separate test profile; a streamer's open app must not affect them.
+const testProfile = await mkdtemp(join(tmpdir(), 'pearconnect-process-profile-'));
+test.after(() => rm(testProfile, { recursive: true, force: true }));
+const cleanEnv = { ...process.env, ...(process.platform === 'win32' ? { USERPROFILE: testProfile } : {}), CONNECTION_MODE: 'advanced', YTMD_TOKEN: '', DRY_RUN: 'false', TIKFINITY_PORT: '0', TIKFINITY_SECRET: '', TWITCH_CHANNEL: '', YOUTUBE_CHANNEL_ID: '' };
 async function run(file, args = [], env = cleanEnv, cwd = root) {
   const child = spawn(process.execPath, [file, ...args], { cwd, env });
   let output = ''; child.stdout.on('data', c => output += c); child.stderr.on('data', c => output += c);

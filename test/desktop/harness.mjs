@@ -88,6 +88,23 @@ try {
   assert.equal(authorized.ok, true); assert.equal(authorized.value.status.player, 'ready'); assert.equal(authCalls, 1); assert.equal(writes, 0);
   assert.doesNotMatch(JSON.stringify(authorized), /fresh-private-credential/);
   assert.equal((await store.read()).YTMD_TOKEN, 'fresh-private-credential');
+  // Walk the actual interactive guide. Only the controlled chat/search fixture supplies evidence.
+  await evaluate('document.querySelector("[data-view=setup]").click(); call("beginVerification")');
+  assert.equal(controller.engine.requestsEnabled, false);
+  await evaluate('document.querySelector("#verify-next").click()');
+  assert.equal(await evaluate('document.querySelector("#verify-next").disabled'), true);
+  const marker = controller.engine.verification.challenge;
+  await controller.engine.execute('request', { user: 'alice', query: marker }, 'advanced');
+  await evaluate('call("snapshot");');
+  assert.equal(await evaluate('document.querySelector("#verify-next").disabled'), false);
+  await evaluate('document.querySelector("#verify-next").click()');
+  const originalSearch = controller.engine.player.findFirstSong;
+  controller.engine.player.findFirstSong = async () => ({ videoId: 'test-song', title: 'Jóga', artist: 'Björk', durationSec: 120 });
+  await evaluate('document.querySelector("#verify-song-form [name=user]").value="alice"; document.querySelector("#verify-song-form [name=query]").value="Björk Jóga"; document.querySelector("#verify-song-form").requestSubmit(); new Promise(r=>setTimeout(r,150))');
+  assert.equal(writes, 0); assert.equal(controller.engine.verification.rulesPassed, true);
+  await evaluate('document.querySelector("#verify-next").click(); call("finishVerification")');
+  assert.equal(controller.engine.requestsEnabled, true);
+  controller.engine.player.findFirstSong = originalSearch;
   assert.equal((await evaluate('window.pearconnect.resume()')).value.status.requestsEnabled, true);
   assert.equal((await evaluate('window.pearconnect.pause()')).value.status.requestsEnabled, false); assert.equal(writes, 0);
   assert.equal((await evaluate('window.pearconnect.connections({ YTMD_HOST: "http://evil.invalid" })')).ok, false);
@@ -116,7 +133,7 @@ try {
   await evaluate('call("snapshot")');
   for (const width of [1240, 860]) {
     window.setSize(width, 850);
-    for (const page of ['setup', 'rules', 'connections', 'requests', 'activity', 'dashboard']) {
+    for (const page of ['setup', 'session', 'rules', 'connections', 'requests', 'activity', 'dashboard']) {
       await evaluate(`document.querySelector('[data-view="${page}"]').click()`);
       assert.equal(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'), true, `${page} must fit at ${width}px`);
       assert.equal(await evaluate('document.querySelectorAll("nav [aria-current=page]").length'), 1);

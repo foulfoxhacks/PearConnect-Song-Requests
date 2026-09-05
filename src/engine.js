@@ -1,4 +1,5 @@
 import { EventEmitter } from 'node:events';
+import { randomBytes } from 'node:crypto';
 import { YTMDClient } from './ytmd.js';
 import { QueueManager } from './queue-manager.js';
 import { loadConfig } from './config.js';
@@ -28,6 +29,8 @@ export class PearConnectEngine extends EventEmitter {
     this.active = new Set();
     this.generation = 0;
     this.sequence = 0;
+    this.verification = null;
+    this.webFallback = false;
     this.lifecycle = 'stopped';
     this.playerState = config.dryRun ? 'dry_run' : config.token ? 'disconnected' : 'not_configured';
     this.requestsEnabled = config.requestsEnabled;
@@ -43,6 +46,7 @@ export class PearConnectEngine extends EventEmitter {
     return {
       lifecycle: this.lifecycle, connectionMode: this.config.connectionMode, dryRun: this.config.dryRun,
       requestsEnabled: this.requestsEnabled, player: this.playerState,
+      webFallback: this.webFallback, verification: this.verificationStatus(),
       currentTrack: this.currentTrack ? { title: clean(this.currentTrack.title || ''), artist: clean(this.currentTrack.artist || '') } : null,
       input: { ...this.input },
       chatReplies: this.config.connectionMode === 'simple' ? 'not_configured' : 'external_configuration',
@@ -89,7 +93,11 @@ export class PearConnectEngine extends EventEmitter {
     if (this.config.connectionMode === 'simple') {
       const factory = this.startSocket || (await import('./platforms/tikfinity-ws.js')).startTikfinitySocket;
       this.socket = factory({ url: this.config.websocketUrl, commands: this.config.commands, queue: this.adapter('simple'), log: this.log,
-        onStatus: status => { this.input = { ...this.input, ...status }; this.changed(); } });
+        onStatus: status => {
+          this.input = { ...this.input, ...status };
+          if (this.verification?.state === 'received' && ['disconnected', 'reconnecting'].includes(status.state)) this.verification.state = 'interrupted';
+          this.changed();
+        } });
     } else { this.input.state = this.server ? 'webhook_listening' : 'disabled'; this.changed(); }
   }
 
@@ -112,6 +120,45 @@ export class PearConnectEngine extends EventEmitter {
     return preview.handleRequest({ ...data, platform: 'tiktok' });
   }
 
+  verificationStatus() {
+    if (!this.verification) return null;
+    const v = this.verification;
+    return { ...v, state: v.state === 'waiting' && Date.now() > v.expiresAt ? 'expired' : v.state,
+      playerPassed: this.playerState === 'ready', command: `!${this.config.commands.request} ${v.challenge}` };
+  }
+
+  beginVerification() {
+    if (this.lifecycle !== 'running') throw new InputError('Connect the engine before starting a guided test.');
+    if (this.webFallback) throw new InputError('Turn off the session-code fallback before testing chat commands.');
+    this.pauseRequests();
+    this.verification = { challenge: `pearcheck-${randomBytes(6).toString('hex')}`, mode: this.config.connectionMode,
+      state: 'waiting', expiresAt: Date.now() + 300000, receivedAt: null, rulesPassed: false, rulesMessage: '' };
+    this.changed(); return this.verificationStatus();
+  }
+
+  async verifySong(payload) {
+    if (!this.verification || this.verification.state !== 'received') throw new InputError('Verify delivery of the live test command first.');
+    const v = this.verification;
+    const generation = this.generation;
+    const data = validatePayload(payload);
+    const preview = new QueueManager({ ...this.config, ytmd: this.player, logger: this.log, requestCommand: this.config.commands.request });
+    const result = await preview.handleRequest({ ...data, platform: 'tiktok', preview: true });
+    if (this.verification === v && generation === this.generation) {
+      v.rulesPassed = result.code === 'preview_passed'; v.rulesMessage = result.message; this.changed();
+    } else return { ok: false, code: 'intake_changed', message: 'Settings changed during the sample search. Run the song check again.' };
+    return result;
+  }
+
+  finishVerification() {
+    const v = this.verificationStatus();
+    if (!v?.playerPassed || v.state !== 'received' || !v.rulesPassed) throw new InputError('Complete the player, live command and song checks before finishing.');
+    this.resumeRequests(); this.verification.state = 'complete'; this.changed();
+  }
+
+  setWebFallback(enabled) {
+    if (this.webFallback !== enabled) { this.pauseRequests(); this.webFallback = enabled; this.verification = null; this.changed(); }
+  }
+
   pauseRequests() { this.requestsEnabled = false; this.generation++; this.changed(); }
   resumeRequests() {
     if (this.lifecycle !== 'running') throw new InputError('Start the engine before enabling requests.');
@@ -129,6 +176,7 @@ export class PearConnectEngine extends EventEmitter {
       this.socket?.stop(); this.socket = null;
       await Promise.allSettled([...this.active]);
       this.config.connectionMode = mode;
+      this.verification = null;
       this.input = { state: 'disconnected', lastEventAt: null, lastChatAt: null, lastCommandAt: null, invalidEvents: 0 };
       if (this.lifecycle === 'running') await this.connectInput();
     } finally { this.transitioning = false; this.changed(); }
@@ -136,6 +184,11 @@ export class PearConnectEngine extends EventEmitter {
 
   updateRules(values) {
     const next = validateRuleUpdates(values, this.ruleValues());
+    this.generation++;
+    if (this.verification) {
+      this.verification.rulesPassed = false;
+      if (next.commands.request !== this.config.commands.request) this.verification = null;
+    }
     for (const key of ['cooldownSeconds', 'maxSongSeconds', 'maxPerUser', 'blocklist', 'requestAllowlist']) this.config[key] = next[key];
     // Existing adapter references and accounting remain valid.
     Object.assign(this.config.commands, next.commands);
@@ -169,6 +222,18 @@ export class PearConnectEngine extends EventEmitter {
     if (this.active.size >= 32) return reject('busy', 'Too many commands are processing. Try later.');
     let payload;
     try { payload = validatePayload(data); } catch (error) { return reject('invalid_input', error.message); }
+    // A reserved test marker can never become a song, including after its test expires.
+    if (command === 'request' && /^pearcheck-/i.test(payload.query)) {
+      const v = this.verification;
+      if (v?.state === 'waiting' && Date.now() <= v.expiresAt && source === v.mode && payload.query === v.challenge) {
+        v.state = 'received'; v.receivedAt = new Date().toISOString();
+        this.input.lastCommandAt = v.receivedAt; this.changed();
+        return { ok: true, code: 'connection_verified', message: 'Live test command received. No song was searched or queued.' };
+      }
+      return reject('test_inactive', 'This test command is inactive. Start a new guided test in PearConnect.');
+    }
+    if (this.webFallback && ['simple', 'advanced'].includes(source)) return reject('fallback_active', 'Session-code fallback is active. TikTok command intake is paused.');
+    if (source === 'web' && (!this.webFallback || command !== 'request')) return reject('input_disabled', 'Website requests are inactive.');
     const entry = { id: ++this.sequence, time: new Date().toISOString(), user: payload.user, query: payload.query, command, source, state: 'received' };
     this.activity.push(entry); if (this.activity.length > 200) this.activity.shift();
     if (['advanced', 'simple'].includes(source)) this.input.lastCommandAt = entry.time;
@@ -180,9 +245,10 @@ export class PearConnectEngine extends EventEmitter {
     else {
       entry.state = 'checking'; this.changed();
       try {
-        result = await this.queue[methods[command]]({ ...payload, platform: data.platform || 'tiktok', reply: data.reply,
+        result = await this.queue[methods[command]]({ ...payload, platform: source === 'web' ? 'web' : data.platform || 'tiktok', reply: data.reply,
           allowlist: this.config.skipAllowlist,
           canMutate: () => this.lifecycle === 'running' && this.requestsEnabled && generation === this.generation && !this.transitioning,
+          beforeEnqueue: data.beforeEnqueue,
           onStage: stage => { entry.state = stage; this.changed(); } });
       } catch { result = reject('internal_error', 'Could not process this command. Check the player before retrying.'); }
     }
@@ -202,6 +268,7 @@ export class PearConnectEngine extends EventEmitter {
   async stopInternal() {
     if (this.lifecycle === 'stopped') return;
     this.lifecycle = 'stopping'; this.pauseRequests();
+    this.verification = null;
     this.socket?.stop(); this.socket = null;
     await Promise.allSettled([
       ...(this.youtube ? [Promise.resolve().then(() => this.youtube.stop())] : []),

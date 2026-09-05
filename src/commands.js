@@ -8,6 +8,8 @@ export function parseCommand(message, commands) {
 }
 
 export function isAllowed({ user, userId, platform }, allowlist) {
+  // Anonymous website names cannot satisfy a trusted chat identity allowlist.
+  if (platform === 'web') return false;
   return allowlist.some(entry => {
     if (platform === 'youtube') return !!userId && entry === `youtube:${userId}`;
     const value = entry.toLowerCase();

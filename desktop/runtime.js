@@ -46,11 +46,27 @@ export async function launchDesktop({ dataDir = app.getPath('userData'), show = 
     snapshot: () => controller.snapshot(),
     testPlayer: async () => { await controller.engine.testPlayer(); return controller.snapshot(); },
     authorize: () => controller.authorize(),
-    pause: () => { controller.engine.pauseRequests(); return controller.snapshot(); },
-    resume: () => { controller.engine.resumeRequests(); return controller.snapshot(); },
+    pause: () => controller.intake(false),
+    resume: () => controller.intake(true),
+    beginVerification: () => { controller.engine.beginVerification(); return controller.snapshot(); },
+    verifySong: payload => controller.engine.verifySong(payload),
+    finishVerification: () => { controller.engine.finishVerification(); return controller.snapshot(); },
+    createSession: values => controller.createSession(values),
+    updateSession: values => controller.updateSession(values),
+    endSession: () => controller.endSession(),
+    pairDashboard: async () => { await shell.openExternal(await controller.session.pairingUrl()); return { message: 'Pairing opened in your browser. The link expires in two minutes and works once.' }; },
+    copySessionLink: () => {
+      const info = controller.session?.snapshot();
+      if (!info || info.ended) throw new InputError('Create a session first.');
+      clipboard.writeText(info.url); return { message: 'Viewer request link copied. This link cannot manage the session.' };
+    },
+    copyTestCommand: () => {
+      const v = controller.engine.verificationStatus(); if (!v || v.state !== 'waiting') throw new InputError('Start a new guided test first.');
+      clipboard.writeText(v.command); return { message: 'Test command copied. Send it as a comment in your live TikTok chat.' };
+    },
     mode: value => controller.changeMode(value), rules: values => controller.saveRules(values),
     connections: values => controller.saveConnections(values), reconnect: () => controller.reconnect(),
-    disconnect: async () => { await controller.serialized(() => controller.engine.stop()); return controller.snapshot(); },
+    disconnect: async () => { await controller.serialized(() => controller.stop()); return controller.snapshot(); },
     testRequest: values => controller.engine.validateRequest(values),
     testIntegration: async () => {
       const config = controller.engine.config;
@@ -123,7 +139,7 @@ export async function launchDesktop({ dataDir = app.getPath('userData'), show = 
   let stopping = false;
   window.on('close', event => {
     if (stopping) return; event.preventDefault(); stopping = true;
-    controller.engine.stop().finally(() => window.destroy());
+    controller.stop().finally(() => window.destroy());
   });
   return { window, controller };
 }
