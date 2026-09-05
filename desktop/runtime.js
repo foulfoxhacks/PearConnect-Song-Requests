@@ -6,8 +6,10 @@ import dotenv from 'dotenv';
 import { SettingsStore, SETTING_KEYS } from './settings.js';
 import { DesktopController } from './controller.js';
 import { InputError } from '../src/validation.js';
+import { PlaybackStudio } from './studio.js';
+import { lastfmUrl } from '../src/playback.js';
 
-const { app, BrowserWindow, ipcMain, session, dialog, clipboard, shell, net, protocol, safeStorage } = electron;
+const { app, BrowserWindow, ipcMain, session, dialog, clipboard, shell, net, protocol, safeStorage, nativeImage } = electron;
 const directory = dirname(fileURLToPath(import.meta.url));
 export const APP_URL = 'pearconnect://desktop/index.html';
 protocol.registerSchemesAsPrivileged([{ scheme: 'pearconnect', privileges: { standard: true, secure: true, supportFetchAPI: false } }]);
@@ -16,7 +18,7 @@ export function trustedSender(event, window) {
   return event.sender === window.webContents && event.senderFrame === window.webContents.mainFrame && event.senderFrame.url === APP_URL;
 }
 
-export async function launchDesktop({ dataDir = app.getPath('userData'), show = true } = {}) {
+export async function launchDesktop({ dataDir = app.getPath('userData'), show = true, studioOptions = {} } = {}) {
   const controller = new DesktopController(new SettingsStore(join(dataDir, 'settings.json'), safeStorage));
   let initialError;
   try { await controller.init(); } catch (error) {
@@ -28,14 +30,26 @@ export async function launchDesktop({ dataDir = app.getPath('userData'), show = 
     controller.engine = new PearConnectEngine(validateSettings(controller.env));
     controller.startupError = initialError;
   }
-  const window = new BrowserWindow({ title: 'PearConnect Desktop', width: 1240, height: 850, minWidth: 860, minHeight: 620, show: false, backgroundColor: '#151819',
+  controller.studio = new PlaybackStudio(controller, { decode: data => {
+    const image = nativeImage.createFromBuffer(data); if (image.isEmpty()) return null;
+    const size = image.getSize(); if (size.width > 8192 || size.height > 8192) return null;
+    return image.resize({ width: Math.min(640, size.width), quality: 'good' }).toPNG();
+  }, ...studioOptions });
+  await controller.studio.start();
+  const iconPath = () => join(directory, 'assets', `${controller.env.APP_ICON || 'pear'}.png`);
+  const window = new BrowserWindow({ title: 'PearConnect Desktop', icon: iconPath(), width: 1320, height: 900, minWidth: 860, minHeight: 620, show: false, backgroundColor: '#151819',
     webPreferences: { preload: join(directory, 'preload.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true, webviewTag: false } });
   window.setMenuBarVisibility(false);
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
   session.defaultSession.setPermissionCheckHandler(() => false);
-  const assets = new Map(['index.html', 'renderer.js', 'style.css'].map(file => [`/` + file, join(directory, file)]));
+  const assets = new Map(['index.html', 'renderer.js', 'style.css', 'widget.js', 'widget.css', 'studio-ui.js', 'studio.css', 'assets/pear.png', 'assets/orchid.png', 'assets/ember.png', 'assets/sample-cover.png'].map(file => [`/` + file, join(directory, file)]));
   protocol.handle('pearconnect', request => {
-    const url = new URL(request.url); const path = url.hostname === 'desktop' && !url.search ? assets.get(url.pathname) : null;
+    const url = new URL(request.url);
+    const artwork = /^\/artwork\/([a-f\d]{16})\.png$/.exec(url.pathname);
+    if (url.hostname === 'desktop' && !url.search && artwork) {
+      const data = controller.studio.artwork(artwork[1]); return new Response(data, { status: data ? 200 : 404, headers: { 'Content-Type': 'image/png', 'Cache-Control': 'no-store' } });
+    }
+    const path = url.hostname === 'desktop' && !url.search ? assets.get(url.pathname) : null;
     return path ? net.fetch(pathToFileURL(path).href) : new Response('Not found', { status: 404 });
   });
   window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
@@ -44,6 +58,14 @@ export async function launchDesktop({ dataDir = app.getPath('userData'), show = 
   let preview;
   const actions = {
     snapshot: () => controller.snapshot(),
+    appearance: async values => { const result = await controller.saveAppearance(values); window.setIcon(iconPath()); return result; },
+    removeLastfm: () => controller.removeLastfm(),
+    openLastfmSetup: async () => { await shell.openExternal('https://www.last.fm/api/account/create'); return { message: 'Last.fm API key setup opened in your browser.' }; },
+    openLastfmTerms: async () => { await shell.openExternal('https://www.last.fm/api/tos'); return { message: 'Last.fm API terms opened in your browser.' }; },
+    similarTracks: () => controller.studio.similar(),
+    openTrackInfo: async () => { const url = lastfmUrl(controller.studio.snapshot().metadata?.url); if (!url) throw new InputError('Last.fm information is not available for this track.'); await shell.openExternal(url); return { message: 'Opened this track on Last.fm.' }; },
+    copyOverlay: () => { clipboard.writeText(controller.studio.overlayUrl()); return { message: 'OBS browser-source URL copied. Keep this read-only link private. Set the source to 760 × 260, then resize it in your scene.' }; },
+    rotateOverlay: () => controller.rotateOverlay(),
     testPlayer: async () => { await controller.engine.testPlayer(); return controller.snapshot(); },
     authorize: () => controller.authorize(),
     pause: () => controller.intake(false),
@@ -139,7 +161,7 @@ export async function launchDesktop({ dataDir = app.getPath('userData'), show = 
   let stopping = false;
   window.on('close', event => {
     if (stopping) return; event.preventDefault(); stopping = true;
-    controller.stop().finally(() => window.destroy());
+    controller.studio.close().then(() => controller.stop()).finally(() => window.destroy());
   });
   return { window, controller };
 }

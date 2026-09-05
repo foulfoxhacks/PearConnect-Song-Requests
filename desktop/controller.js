@@ -4,6 +4,8 @@ import { YTMDClient } from '../src/ytmd.js';
 import { InputError } from '../src/validation.js';
 import { validateSettings, CONNECTION_KEYS } from './settings.js';
 import { SessionClient } from '../src/session-client.js';
+import { appearance, validateAppearance } from './appearance.js';
+import { newOverlayToken } from './studio.js';
 
 export class DesktopController {
   constructor(store, { engineOptions = {}, sessionOptions = {} } = {}) { this.store = store; this.engineOptions = engineOptions; this.sessionOptions = sessionOptions; this.busy = false; }
@@ -18,6 +20,7 @@ export class DesktopController {
   }
   snapshot() {
     return { status: this.engine.status(), rules: this.engine.ruleValues(), session: this.session?.snapshot(), sessionMinutes: this.env.SESSION_MINUTES || '240',
+      studio: this.studio?.snapshot() || { appearance: appearance(this.env), track: null, metadata: { state: 'disabled' }, overlayState: 'disabled', hasLastfmKey: !!this.env.LASTFM_KEY },
       connections: Object.fromEntries(CONNECTION_KEYS.map(key => [key, this.env[key] || ({ YTMD_HOST: this.engine.config.host, YTMD_CLIENT_ID: this.engine.config.clientId, YTMD_TIMEOUT_MS: String(this.engine.config.timeoutMs), TIKFINITY_WS_URL: this.engine.config.websocketUrl, TIKFINITY_PORT: String(this.engine.config.port) }[key] || '')])),
       hasPlayerCredential: !!this.env.YTMD_TOKEN, hasTwitchCredential: !!this.env.TWITCH_OAUTH,
       secureStorage: this.store.encryptionAvailable(), startupError: this.startupError || null };
@@ -27,6 +30,18 @@ export class DesktopController {
     this.busy = true;
     try { return await fn(); } finally { this.busy = false; }
   }
+  async saveAppearance(values) {
+    return this.serialized(async () => {
+      validateAppearance(values);
+      const next = { ...this.env, ...values };
+      if (values.LASTFM_KEY === '') next.LASTFM_KEY = this.env.LASTFM_KEY || '';
+      if (next.OVERLAY_ENABLED === 'true' && !next.OVERLAY_TOKEN) next.OVERLAY_TOKEN = newOverlayToken();
+      await this.store.write(next); this.env = next;
+      await this.studio?.configure(); return this.snapshot();
+    });
+  }
+  async removeLastfm() { return this.serialized(async () => { const next = { ...this.env, LASTFM_KEY: '', LASTFM_ENABLED: 'false' }; await this.store.write(next); this.env = next; await this.studio?.configure(); return this.snapshot(); }); }
+  async rotateOverlay() { return this.serialized(async () => { const next = { ...this.env, OVERLAY_TOKEN: newOverlayToken() }; await this.store.write(next); this.env = next; await this.studio?.configure(); return this.snapshot(); }); }
   async saveRules(values) {
     return this.serialized(async () => {
       validateRuleUpdates(values, this.engine.ruleValues());
@@ -52,6 +67,7 @@ export class DesktopController {
     await this.session?.close();
     await this.engine.stop();
     this.env = next;
+    await this.studio?.configure();
     // Preserve the QueueManager and its counters/history while replacing connections.
     const e = this.engine;
     e.config = config;

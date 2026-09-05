@@ -12,9 +12,9 @@ test('settings keep credentials out of public fields, round-trip through storage
   const dir = await mkdtemp(join(tmpdir(), 'pearconnect-settings-')); t.after(() => rm(dir, { recursive: true, force: true }));
   const store = new SettingsStore(join(dir, 'settings.json'), storage);
   assert.equal(await store.read(), null);
-  const env = { YTMD_TOKEN: 'private-player-token', TWITCH_OAUTH: 'oauth:secret', TIKFINITY_SECRET: 'private-webhook', CONNECTION_MODE: 'advanced' };
+  const env = { YTMD_TOKEN: 'private-player-token', TWITCH_OAUTH: 'oauth:secret', TIKFINITY_SECRET: 'private-webhook', CONNECTION_MODE: 'advanced', LASTFM_KEY: 'a'.repeat(32), OVERLAY_TOKEN: 'b'.repeat(64) };
   await store.write(env); assert.deepEqual(await store.read(), env);
-  const raw = await readFile(store.path, 'utf8'); assert.doesNotMatch(raw, /private-player-token|oauth:secret|private-webhook/);
+  const raw = await readFile(store.path, 'utf8'); assert.doesNotMatch(raw, /private-player-token|oauth:secret|private-webhook|a{32}|b{64}/);
   assert.deepEqual(JSON.parse(raw).env, { CONNECTION_MODE: 'advanced' });
   store.safeStorage = { ...storage, isEncryptionAvailable: () => false };
   await assert.rejects(store.write({}), /Secure credential/); assert.equal(await readFile(store.path, 'utf8'), raw);

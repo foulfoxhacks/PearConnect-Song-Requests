@@ -13,7 +13,7 @@ await writeFile(join(stage, 'package.json'), JSON.stringify(pkg, null, 2));
 const installed = spawnSync(process.execPath, [process.env.npm_execpath, 'ci', '--omit=dev', '--ignore-scripts'], { cwd: stage, stdio: 'inherit' });
 if (installed.status !== 0) process.exit(installed.status || 1);
 const paths = await packager({ dir: stage, name: 'PearConnect', executableName: 'PearConnect', platform: 'win32', arch: 'x64', out: resolve('dist'), overwrite: true,
-  asar: true, prune: false, electronVersion: pkg.devDependencies.electron.replace(/^[~^]/, ''), appVersion: pkg.version, appCopyright: 'MIT · PearConnect contributors',
+  asar: true, prune: false, icon: resolve('desktop/assets/pear.ico'), electronVersion: pkg.devDependencies.electron.replace(/^[~^]/, ''), appVersion: pkg.version, appCopyright: 'MIT · PearConnect contributors',
   win32metadata: { CompanyName: 'PearConnect', FileDescription: 'PearConnect Desktop', ProductName: 'PearConnect' } });
 console.log(`Windows portable application created: ${paths[0]}`);
 const entries = listPackage(join(paths[0], 'resources', 'app.asar'));

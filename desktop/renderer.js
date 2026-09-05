@@ -11,6 +11,7 @@ const pages = {
   rules: ['CONFIGURATION', 'Request rules', 'Set the rhythm for your community. The same rules apply to every input.'],
   connections: ['CONFIGURATION', 'Connections', 'Bring your player and your stream together.'],
   activity: ['SUPPORT', 'Activity & diagnostics', 'Understand each result and find the details when you need them.'],
+  studio: ['YOUR STREAM, YOUR STYLE', 'Visual studio', 'Artwork, atmosphere and a little more personality.'],
   setup: ['GETTING STARTED', 'Ready for your first request?', 'Connect your music, bring in your chat and make the rules yours.']
   ,session: ['OPTIONAL FALLBACK', 'A code for your stream.', 'A temporary request link, checked by your desktop.']
 };
@@ -79,6 +80,7 @@ function queue(tracks) {
   });
 }
 function render(value, forms = false) {
+  window.PearStudio.render(value.studio, forms);
   renderVerification(value);
   const session = value.session;
   $('#session-create-form').hidden = !!session && !session.ended && session.state !== 'expired';
@@ -149,6 +151,8 @@ async function call(name, payload, formUpdate = false) {
     if (name === 'previewDiagnostics') { $('#diagnostic-preview').hidden = false; $('#diagnostic-preview').textContent = value.preview; previewReady = true; }
     if (name === 'exportDiagnostics') previewReady = false;
     if (name === 'playerQueue') { $('#queue-note').textContent = value.message; queue(value.tracks); }
+    if (name === 'similarTracks') window.PearStudio.similar(value);
+    if (name === 'appearance') notice('Design saved. Your desktop and enabled OBS widget are up to date.');
     if (name === 'verifySong') { const fresh = await api.snapshot(); if (fresh.ok) render(fresh.value); }
     if (name === 'finishVerification') { notice('Guided checks passed. Requests are enabled. Watch the activity feed for your first enqueue confirmation.'); view('dashboard'); }
     return value;
@@ -186,14 +190,9 @@ $('.skip-link').addEventListener('click', event => { event.preventDefault(); $('
 document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => view(button.dataset.view)));
 document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => call(button.dataset.action)));
 document.querySelectorAll('[data-mode]').forEach(button => button.addEventListener('click', () => call('mode', button.dataset.mode, true)));
-for (const [id, operation] of [['rules-form', 'rules'], ['connections-form', 'connections'], ['sample-form', 'testRequest'], ['verify-song-form', 'verifySong'], ['session-create-form', 'createSession'], ['session-expiry-form', 'updateSession']]) {
+for (const [id, operation] of [['rules-form', 'rules'], ['connections-form', 'connections'], ['sample-form', 'testRequest'], ['verify-song-form', 'verifySong'], ['session-create-form', 'createSession'], ['session-expiry-form', 'updateSession'], ['widget-form', 'appearance'], ['appearance-form', 'appearance'], ['lastfm-form', 'appearance']]) {
   $(`#${id}`).addEventListener('submit', event => { event.preventDefault(); call(operation, Object.fromEntries(new FormData(event.currentTarget)), true); });
 }
 async function refresh() { if (busy || document.hidden) return; try { const result = await api.snapshot(); if (result.ok) render(result.value); } catch { /* A closing window needs no retry action. */ } }
 call('snapshot');
-setInterval(refresh, 3000);
-// Low-frequency player reads update now-playing without polling during setup or authorization.
-setInterval(async () => {
-  if (busy || document.hidden || !snapshot?.hasPlayerCredential || snapshot.status.lifecycle !== 'running') return;
-  try { const result = await api.testPlayer(); if (result.ok && !busy) render(result.value); } catch { /* Next visible poll can recover. */ }
-}, 15000);
+setInterval(refresh, 2000);

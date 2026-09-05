@@ -2,6 +2,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 const call = (operation, payload) => ipcRenderer.invoke('pearconnect', operation, payload);
 // No raw IPC, HTTP, filesystem, shell, credential read or arbitrary command API.
 contextBridge.exposeInMainWorld('pearconnect', Object.freeze({
+  openLastfmSetup: () => call('openLastfmSetup'), openLastfmTerms: () => call('openLastfmTerms'),
+  appearance: values => call('appearance', values), removeLastfm: () => call('removeLastfm'), similarTracks: () => call('similarTracks'), openTrackInfo: () => call('openTrackInfo'), copyOverlay: () => call('copyOverlay'), rotateOverlay: () => call('rotateOverlay'),
   snapshot: () => call('snapshot'), testPlayer: () => call('testPlayer'), authorize: () => call('authorize'),
   beginVerification: () => call('beginVerification'), verifySong: value => call('verifySong', value), finishVerification: () => call('finishVerification'),
   copyTestCommand: () => call('copyTestCommand'),

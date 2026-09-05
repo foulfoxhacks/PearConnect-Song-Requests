@@ -1,7 +1,7 @@
 import electron from 'electron';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
-import { writeFile } from 'node:fs/promises';
+import { writeFile, readFile } from 'node:fs/promises';
 import http from 'node:http';
 import { once } from 'node:events';
 import { spawn } from 'node:child_process';
@@ -18,7 +18,10 @@ try {
   const { SettingsStore } = await import('../../desktop/settings.js');
   const store = new SettingsStore(join(dataDir, 'settings.json'), safeStorage);
   await store.write({ CONNECTION_MODE: 'advanced', DRY_RUN: 'true', TIKFINITY_PORT: '0', TIKFINITY_SECRET: 'desktop-test-private-secret' });
-  runtime = await launchDesktop({ dataDir, show: false });
+  const sampleArt = await readFile(new URL('../../desktop/assets/sample-cover.png', import.meta.url));
+  runtime = await launchDesktop({ dataDir, show: false, studioOptions: { fetcher: async url => {
+    assert.equal(new URL(url).hostname, 'i.ytimg.com'); return new Response(sampleArt, { headers: { 'content-type': 'image/png' } });
+  } } });
   const { window, controller } = runtime;
   window.webContents.setBackgroundThrottling(false); // Let hidden visual checks wait for actual painted frames.
   const prefs = window.webContents.getLastWebPreferences();
@@ -80,7 +83,7 @@ try {
         { playlistPanelVideoRenderer: { title: { simpleText: 'A song for the stream' }, shortBylineText: { runs: [{ text: 'Local fixture' }] } } }
       ] }));
     }
-    else { if (request.method !== 'GET') writes++; response.end(JSON.stringify({ title: 'Connected test player', artist: 'Local fixture' })); }
+    else { if (request.method !== 'GET') writes++; response.end(JSON.stringify({ title: 'Night Drive', artist: 'PearConnect Sessions', album: 'After hours · Sample track', songDuration: 246, elapsedSeconds: 83, isPaused: false, imageSrc: 'https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg' })); }
   });
   playerServer.listen(0, '127.0.0.1'); await once(playerServer, 'listening');
   await controller.importEnv({ CONNECTION_MODE: 'advanced', TIKFINITY_PORT: '0', YTMD_HOST: `http://127.0.0.1:${playerServer.address().port}`, REQUEST_ALLOWLIST: 'tiktok:alice' });
@@ -109,7 +112,24 @@ try {
   assert.equal((await evaluate('window.pearconnect.pause()')).value.status.requestsEnabled, false); assert.equal(writes, 0);
   assert.equal((await evaluate('window.pearconnect.connections({ YTMD_HOST: "http://evil.invalid" })')).ok, false);
   // The persistent control must still use its current action after a status refresh/navigation.
+  await controller.studio.poll();
+  for (let i = 0; i < 20 && !controller.studio.snapshot().art; i++) await new Promise(resolve => setTimeout(resolve, 25));
   await evaluate('call("snapshot")');
+  assert.match(await evaluate('document.querySelector("#overview-widget").textContent'), /Night Drive/);
+  assert.equal(await evaluate('new Promise(resolve => { const image = document.querySelector("#overview-widget img"); if (image.complete && image.naturalWidth) return resolve(true); image.addEventListener("load", () => resolve(image.naturalWidth > 0), { once: true }); image.addEventListener("error", () => resolve(false), { once: true }); setTimeout(() => resolve(false), 5000); })'), true);
+  assert.match(await evaluate('document.querySelector("#overview-widget .widget-elapsed").textContent'), /1:2\d \/ 4:06/);
+  assert.equal((await evaluate('window.pearconnect.appearance({ WIDGET_ACCENT: "url(file:///secret)" })')).ok, false);
+  await evaluate('document.querySelector("[data-view=studio]").click(); document.querySelector("#widget-form [name=WIDGET_LAYOUT]").value="compact"; document.querySelector("#widget-form").dispatchEvent(new Event("input", { bubbles: true }))');
+  assert.equal(await evaluate('document.querySelector("#studio-widget .music-widget").dataset.layout'), 'compact');
+  assert.equal(controller.env.WIDGET_LAYOUT, undefined, 'preview does not persist before save');
+  await evaluate('document.querySelector("#widget-form").requestSubmit(); new Promise(resolve => setTimeout(resolve, 200))');
+  assert.equal(controller.env.WIDGET_LAYOUT, 'compact');
+  assert.equal((await evaluate('window.pearconnect.appearance({APP_ICON:"orchid",APP_BACKGROUND:"dusk",APP_FONT:"humanist",APP_TEXT:"large"})')).ok, true);
+  await evaluate('call("snapshot", undefined, true)');
+  assert.equal(await evaluate('document.body.dataset.background'), 'dusk');
+  window.setSize(860, 850); assert.equal(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'), true);
+  assert.equal((await evaluate('window.pearconnect.appearance({APP_ICON:"pear",APP_BACKGROUND:"aurora",APP_FONT:"system",APP_TEXT:"standard",WIDGET_LAYOUT:"cover"})')).ok, true);
+  await evaluate('call("snapshot", undefined, true)');
   await evaluate('document.querySelector("#intake-toggle").click(); new Promise(resolve => setTimeout(resolve, 150))');
   assert.equal(controller.engine.requestsEnabled, true);
   assert.equal(await evaluate('document.querySelector("#intake-toggle-label").textContent'), 'Pause requests');
@@ -133,7 +153,7 @@ try {
   await evaluate('call("snapshot")');
   for (const width of [1240, 860]) {
     window.setSize(width, 850);
-    for (const page of ['setup', 'session', 'rules', 'connections', 'requests', 'activity', 'dashboard']) {
+    for (const page of ['setup', 'session', 'studio', 'rules', 'connections', 'requests', 'activity', 'dashboard']) {
       await evaluate(`document.querySelector('[data-view="${page}"]').click()`);
       assert.equal(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'), true, `${page} must fit at ${width}px`);
       assert.equal(await evaluate('document.querySelectorAll("nav [aria-current=page]").length'), 1);
@@ -144,6 +164,6 @@ try {
   assert.deepEqual(pageErrors, []);
   console.log('PASS: real Electron sandbox, IPC boundary, encrypted authorization, GUI/CLI exclusion, shared rules, safe preview, forms, request controls, keyboard navigation and responsive rendering.');
   console.log(`Screenshots: ${dataDir}`);
-  await controller.engine.stop(); playerServer.closeAllConnections(); await new Promise(resolve => playerServer.close(resolve)); window.destroy(); app.quit();
+  await controller.studio.close(); await controller.engine.stop(); playerServer.closeAllConnections(); await new Promise(resolve => playerServer.close(resolve)); window.destroy(); app.quit();
 } catch (error) { console.error(error); playerServer?.closeAllConnections(); playerServer?.close(); await runtime?.controller.engine.stop(); runtime?.window.destroy(); app.exit(1); }
 });

@@ -4,15 +4,18 @@ import { randomUUID } from 'node:crypto';
 import { loadConfig } from '../src/config.js';
 import { InputError } from '../src/validation.js';
 import { RULE_KEYS } from '../src/engine.js';
+import { APPEARANCE_KEYS, validateAppearance } from './appearance.js';
 
 export const CONNECTION_KEYS = ['YTMD_HOST', 'YTMD_CLIENT_ID', 'YTMD_TIMEOUT_MS', 'TIKFINITY_WS_URL', 'TIKFINITY_PORT', 'TWITCH_CHANNEL', 'TWITCH_USERNAME', 'YOUTUBE_CHANNEL_ID'];
-export const SECRET_KEYS = ['YTMD_TOKEN', 'TIKFINITY_SECRET', 'TWITCH_OAUTH'];
-export const SETTING_KEYS = [...CONNECTION_KEYS, ...SECRET_KEYS, ...RULE_KEYS, 'CONNECTION_MODE', 'REQUESTS_ENABLED', 'DRY_RUN', 'SESSION_MINUTES'];
+export const SECRET_KEYS = ['YTMD_TOKEN', 'TIKFINITY_SECRET', 'TWITCH_OAUTH', 'LASTFM_KEY', 'OVERLAY_TOKEN'];
+export const SETTING_KEYS = [...CONNECTION_KEYS, ...SECRET_KEYS, ...RULE_KEYS, ...APPEARANCE_KEYS, 'CONNECTION_MODE', 'REQUESTS_ENABLED', 'DRY_RUN', 'SESSION_MINUTES'];
 
 export function validateSettings(env) {
   if (!env || typeof env !== 'object' || Array.isArray(env) || Object.keys(env).some(key => !SETTING_KEYS.includes(key)) || Object.values(env).some(value => typeof value !== 'string' || value.length > 4096)) throw new InputError('Invalid desktop settings.');
   // The desktop only authorizes a local player. Do not send credentials to a remote host.
   const config = loadConfig(env, { allowUnconfigured: true });
+  validateAppearance(Object.fromEntries(Object.entries(env).filter(([key]) => APPEARANCE_KEYS.includes(key) || key === 'LASTFM_KEY')));
+  if (env.OVERLAY_TOKEN && !/^[a-f\d]{64}$/.test(env.OVERLAY_TOKEN)) throw new InputError('Invalid overlay credential.');
   if (env.SESSION_MINUTES !== undefined && (!/^\d+$/.test(env.SESSION_MINUTES) || Number(env.SESSION_MINUTES) < 15 || Number(env.SESSION_MINUTES) > 1440)) throw new InputError('Session expiration must be 15 to 1440 minutes.');
   if (!['127.0.0.1', 'localhost', '[::1]'].includes(new URL(config.host).hostname)) throw new InputError('Pear Desktop must use a localhost address.');
   return config;
@@ -35,7 +38,7 @@ export class SettingsStore {
   async write(env) {
     validateSettings(env);
     if (!this.encryptionAvailable()) throw new InputError('Secure credential storage is unavailable. Settings were not saved. Restore the operating-system credential store and try again.');
-    const secrets = Object.fromEntries(SECRET_KEYS.map(key => [key, env[key] || '']));
+    const secrets = Object.fromEntries(SECRET_KEYS.filter(key => key in env).map(key => [key, env[key] || '']));
     const publicEnv = Object.fromEntries(Object.entries(env).filter(([key]) => !SECRET_KEYS.includes(key)));
     const content = JSON.stringify({ version: 1, env: publicEnv, secrets: this.safeStorage.encryptString(JSON.stringify(secrets)).toString('base64') }, null, 2);
     await mkdir(dirname(this.path), { recursive: true });

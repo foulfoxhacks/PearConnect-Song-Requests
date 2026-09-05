@@ -4,7 +4,7 @@ The desktop console and CLI use one engine with the same rules, permissions and 
 
 ## Windows portable build
 
-Download the Windows ZIP from the **[PearConnect website](https://pearconnect.mellozone.site/#download)** or the **[0.3.0-beta.2 release](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/tag/v0.3.0-beta.2)**. The release also includes `SHA256SUMS.txt`. Extract the complete folder and open `PearConnect.exe`. Keep its runtime files alongside it. No separate Node.js, npm or Git installation is required to run this build. Builds are currently unsigned; code signing and an installer are separate release work.
+Download the Windows ZIP from the **[PearConnect website](https://pearconnect.mellozone.site/#download)** or the **[0.3.0-beta.3 release](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/tag/v0.3.0-beta.3)**. The release also includes `SHA256SUMS.txt`. Extract the complete folder and open `PearConnect.exe`. Keep its runtime files alongside it. No separate Node.js, npm or Git installation is required to run this build. Builds are currently unsigned; code signing and an installer are separate release work.
 
 For development snapshots, successful GitHub Actions runs also provide the **PearConnect-Windows-x64-preview** artifact.
 
@@ -40,7 +40,7 @@ Request history shows received/checking/searching/enqueuing and a final result. 
 
 The console uses original PearConnect artwork, a graphite and pear-green palette, one navigation sidebar and open sections separated by fine rules. Controls have restrained corners; the interface avoids nested cards and floating overlays. The TikFinity reference informed the emphasis on navigation and connection visibility; its assets and visual design were not reused.
 
-**Overview** shows player, chat input and request intake in one status strip. The request control stays available in the top bar on all six pages. Input activity separates the last event, chat message and recognized command. Recent song requests show the latest four results; Requests & queue and Activity show the bounded command history in accessible tables. Queue tracks remain a separate read-only list.
+**Overview** shows player, chat input and request intake in one status strip. The request control stays available in the top bar throughout the app. Input activity separates the last event, chat message and recognized command. Recent song requests show the latest four results; Requests & queue and Activity show the bounded command history in accessible tables. Queue tracks remain a separate read-only list.
 
 Rules use labeled form sections, Connections makes Simple/Advanced selection visible, and the setup guide follows a numbered sequence. Keyboard navigation includes a skip-to-workspace link, focus indicators and the current navigation item. Layout checks cover the default 1240-pixel window and the 860-pixel minimum width.
 
@@ -74,4 +74,16 @@ Preview the diagnostic report in Activity before exporting. The exported bytes m
 - Streaming workload: idle CPU/memory, repeated disconnect/reconnect, overnight runtime and player shutdown during writes.
 - Code signing and distribution/update policy before promoting the preview to the normal stable download.
 
-Persistent request history, reconciled queue ownership, approval/cancel/remove controls and stream overlays remain the third release described in the design. These controls are intentionally unavailable until external queue edits and restarts can be handled reliably.
+Persistent request history, reconciled queue ownership and approval/cancel/remove controls remain planned. These controls are unavailable until external queue edits and restarts can be handled reliably. Read-only stream overlays are now included in Visual studio and do not infer queue ownership.
+
+## Visual studio (beta.3)
+
+Overview reads real player artwork, duration, elapsed time and pause state every two seconds. Artwork requests are bounded, restricted to known HTTPS YouTube image hosts and processed in the main process. A failed image uses an original fallback; missing/stale playback timing is explicit.
+
+**Visual studio** previews three OBS layouts with accent, surface, font, heading, artwork, timing and ambient-motion controls. Sample previews never reach OBS. The optional overlay server binds only to loopback, requires a private read-only URL, rejects writes and has no shared credential with the request webhook. Its enable setting and encrypted URL token persist; resetting the link revokes earlier URLs. It remains available while Desktop is open and hides stale playback. Last.fm metadata is excluded from the public widget data.
+
+Desktop appearance includes four backgrounds, three font styles, comfortable text sizing and Pear/Orchid/Ember window icons. Windows packaging embeds the Pear ICO. Pinned shortcut icons may use Windows' cached executable identity.
+
+Optional Last.fm enrichment uses your own API key, encrypted in settings, to request bounded track metadata and on-demand similar tracks. It is off by default, follows response cache directives and fails independently of playback. It does not retrieve Last.fm artwork or write to the queue. Ambient motion does not capture or analyze audio. Spotify playback is not part of this integration.
+
+See the [visual studio guide](https://pearconnect.mellozone.site/docs/visual-studio) for setup and a seven-step OBS acceptance checklist. Automated tests cover artwork loading, clock pauses/seeks/staleness, hostile URLs/text, overlay authentication/rotation and actual Electron/Chromium previews. A real player/OBS rehearsal and a supplied Last.fm key are still needed for external acceptance.
