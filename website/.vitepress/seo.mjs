@@ -36,8 +36,8 @@ export function addPageMetadata(page) {
       '@type': 'SoftwareApplication', '@id': `${origin}/#software`,
       name: 'PearConnect', url: `${origin}/`, description,
       applicationCategory: 'MultimediaApplication', operatingSystem: 'Windows',
-      softwareVersion: '0.3.0-beta.1', isAccessibleForFree: true,
-      downloadUrl: 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/download/v0.3.0-beta.1/PearConnect-0.3.0-beta.1-win-x64.zip',
+      softwareVersion: '0.3.0-beta.2', isAccessibleForFree: true,
+      downloadUrl: 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/download/v0.3.0-beta.2/PearConnect-0.3.0-beta.2-win-x64.zip',
       releaseNotes: `${origin}/docs/releases`, screenshot: preview.url,
       license: 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/blob/main/LICENSE',
       author: { '@id': publisher['@id'] }, publisher: { '@id': publisher['@id'] }
@@ -55,7 +55,7 @@ export function addPageMetadata(page) {
   page.frontmatter.head ??= [];
   page.frontmatter.head.push(
     ['link', { rel: 'canonical', href: canonical }],
-    ['meta', { name: 'robots', content: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' }],
+    ['meta', { name: 'robots', content: page.frontmatter.noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' }],
     ['meta', { property: 'og:type', content: 'website' }],
     ['meta', { property: 'og:url', content: canonical }],
     ['meta', { property: 'og:title', content: title }],

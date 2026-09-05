@@ -7,7 +7,7 @@ description: How PearConnect handles local credentials, request activity, diagno
 
 ## Local engine
 
-PearConnect's request engine runs on your computer. Pear Desktop and the chat platforms still use their own internet services. The website hosts downloads and documentation; it does not control your local player.
+PearConnect's request engine runs on your computer. Pear Desktop and the chat platforms still use their own internet services. The optional website session-code feature forwards submitted song requests to the desktop engine; the website cannot access the player's credentials or expose its local API.
 
 The project is independent community software, not an official service endorsed by the supported platforms.
 
@@ -45,6 +45,10 @@ The on-screen activity feed can contain more detail than the exported report. Re
 ## This website
 
 Documentation search runs locally in your browser. The site uses browser storage for the documentation theme preference and does not add advertising analytics or a sign-in requirement.
+
+The optional [session-code fallback](/docs/session-codes) stores submitted names, song queries and results in a Cloudflare Durable Object for up to 15 minutes. Network addresses are used transiently to derive a private, session-specific identity and enforce attempt limits; raw addresses are not stored in its database. Expired session state is removed within 15 minutes, with underlying Cloudflare backups potentially retaining historical storage longer.
+
+The request page uses session storage for your latest receipt, including its displayed result, to avoid resending on refresh. The paired dashboard uses a secure, HttpOnly, SameSite cookie, separate from the public viewer code. Only the authenticated desktop can mint a one-use dashboard pairing link. Closing or ending the session revokes intake; Desktop can also disconnect the paired browser.
 
 Cloudflare serves the website and GitHub serves downloads and source. Requests to those services are subject to their own policies. Following an external integration link takes you to that provider's site.
 

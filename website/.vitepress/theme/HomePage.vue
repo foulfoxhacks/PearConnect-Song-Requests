@@ -5,7 +5,7 @@ import previewMedium from './assets/desktop-960.webp';
 import previewLarge from './assets/desktop-1600.webp';
 
 const menuOpen = ref(false);
-const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/download/v0.3.0-beta.1/PearConnect-0.3.0-beta.1-win-x64.zip';
+const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/download/v0.3.0-beta.2/PearConnect-0.3.0-beta.2-win-x64.zip';
 </script>
 
 <template>
@@ -22,8 +22,8 @@ const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/rele
       <nav id="home-nav" aria-label="Main navigation" :class="{ open: menuOpen }">
         <a href="#how-it-works" @click="menuOpen = false">How it works</a>
         <a href="/docs/">Documentation</a>
-        <a href="/docs/faq">FAQ</a>
-        <a href="https://github.com/foulfoxhacks/PearConnect-Song-Requests">GitHub <span aria-hidden="true">↗</span></a>
+        <a href="/sessioncode">Request a song</a>
+        <a href="/web/dashboard">Dashboard</a>
         <a href="#download" class="nav-download" @click="menuOpen = false">Download <span aria-hidden="true">↓</span></a>
       </nav>
     </header>
@@ -41,7 +41,7 @@ const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/rele
             </a>
             <a href="/docs/" class="guide-link">Read the setup guide <span aria-hidden="true">→</span></a>
           </div>
-          <p class="release-caption">Free &amp; open source <span>·</span> v0.3.0-beta.1 preview</p>
+          <p class="release-caption">Free &amp; open source <span>·</span> v0.3.0-beta.2 preview</p>
           <p class="hero-detail">Windows x64. Portable download. No separate runtime to install.</p>
         </div>
         <figure class="hero-product">
@@ -64,7 +64,7 @@ const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/rele
         <ol class="how-steps">
           <li><span class="step-number">01</span><h3>Connect your music</h3><p>Enable Pear Desktop’s API Server plugin and authorize PearConnect.</p><a href="/docs/player">Player setup <span aria-hidden="true">↗</span></a></li>
           <li><span class="step-number">02</span><h3>Bring in your chat</h3><p>Connect TikFinity directly, or keep your Streamer.bot automation.</p><a href="/docs/simple">Connection guide <span aria-hidden="true">↗</span></a></li>
-          <li><span class="step-number">03</span><h3>Open the requests</h3><p>Set your rules, run a safe test and enable requests when you’re ready.</p><a href="/docs/rules">Set your rules <span aria-hidden="true">↗</span></a></li>
+          <li><span class="step-number">03</span><h3>Check, then connect</h3><p>Follow the guided player, live-command and song checks, then enable requests.</p><a href="/docs/validation">Run the guided test <span aria-hidden="true">↗</span></a></li>
         </ol>
       </section>
 
@@ -103,7 +103,7 @@ const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/rele
         <div class="download-section section-width">
           <div><p class="kicker">YOUR NEXT STREAM STARTS HERE</p><h2 id="download-title">Bring your chat<br>into the mix.</h2><p>Download PearConnect, extract the complete folder and open the app. Your first request starts with a connection.</p></div>
           <div class="download-options">
-            <div class="download-meta"><span>WINDOWS x64</span><span itemprop="softwareVersion">0.3.0-beta.1</span></div>
+            <div class="download-meta"><span>WINDOWS x64</span><span itemprop="softwareVersion">0.3.0-beta.2</span></div>
             <a class="download-button" :href="download" itemprop="downloadUrl">Download the Windows preview <span aria-hidden="true">↓</span></a>
             <p>Portable ZIP · Free &amp; open source</p>
             <div class="download-links"><a href="/docs/install">Installation guide <span aria-hidden="true">↗</span></a><a href="/docs/cli">CLI setup <span aria-hidden="true">↗</span></a></div>

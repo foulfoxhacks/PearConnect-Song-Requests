@@ -5,6 +5,23 @@ description: Download the current PearConnect desktop preview and understand wha
 
 # Release notes
 
+## 0.3.0-beta.2 · Guided validation & session codes
+
+**5 September 2026** · Windows x64 · Portable ZIP
+
+[Download the current Windows preview](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/download/v0.3.0-beta.2/PearConnect-0.3.0-beta.2-win-x64.zip) · [Release and checksums](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/tag/v0.3.0-beta.2)
+
+- An interactive [guided connection test](/docs/validation) checks the player, an actual incoming command marker and a read-only song search before deliberately enabling requests.
+- Optional [session codes](/docs/session-codes) let viewers request songs on the website when TikTok commands are not reaching Desktop.
+- Codes expire after a configurable 15 minutes to 24 hours. Create them in Desktop, or manage their active expiry from a securely paired web dashboard.
+- The Cloudflare relay keeps management credentials separate from viewer codes, applies rate limits and never automatically replays a claimed request.
+- Anonymous website names cannot bypass chat allowlists. Shared network identities enforce website cooldowns; TikTok command intake remains suspended while the fallback exists.
+- Browser tests cover pairing, expiry controls, Unicode requests, confirmation, refresh without replay, cooldowns, pause/end controls and mobile layouts. Engine tests exercise live local WebSocket delivery; Electron tests walk the actual guide.
+
+These checks use controlled player/chat fixtures. Live TikTok delivery, actual audible playback, fresh-machine acceptance and sustained streaming workloads still require a stream rehearsal. The build remains an unsigned preview.
+
+**Upgrade required:** updating the website does not update Desktop. Close your old PearConnect instance, extract the new ZIP into a separate folder, and run its `PearConnect.exe`. Saved settings remain in your Windows user-data folder; every launch starts paused. Session codes must be recreated after restarting Desktop.
+
 ## 0.3.0-beta.1 · Windows desktop preview
 
 **5 September 2026** · Windows x64 · Portable ZIP

@@ -27,7 +27,7 @@ const paths = (await files(root)).map(file => relative(root, file).split(sep).jo
 const known = new Set(paths);
 const pages = new Map(await Promise.all(paths.filter(path => path.endsWith('.html')).map(async path => [path, await readFile(join(root, path), 'utf8')])));
 const ids = new Map([...pages].map(([path, html]) => [path, new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]))]));
-const expected = ['index.html', '404.html', 'docs/index.html', ...['install', 'player', 'simple', 'advanced', 'platforms', 'commands', 'rules', 'cli', 'troubleshooting', 'faq', 'security', 'releases'].map(name => `docs/${name}.html`)];
+const expected = ['index.html', '404.html', 'sessioncode.html', 'web/dashboard.html', 'docs/index.html', ...['install', 'player', 'simple', 'advanced', 'platforms', 'commands', 'rules', 'cli', 'troubleshooting', 'faq', 'security', 'releases', 'validation', 'session-codes'].map(name => `docs/${name}.html`)];
 for (const path of expected) assert.ok(known.has(path), `Missing route: ${path}`);
 let checked = 0;
 for (const [page, html] of pages) {
@@ -39,7 +39,8 @@ for (const [page, html] of pages) {
     assert.equal(robots, 'noindex, follow', 'Error pages must not be indexed');
     assert.ok(!head.includes('rel="canonical"'), '404 must not canonicalize to a real page');
   } else {
-    assert.match(robots, /^index, follow,/);
+    if (page.startsWith('web/')) assert.equal(robots, 'noindex, follow');
+    else assert.match(robots, /^index, follow,/);
     const canonical = origin + '/' + page.replace(/index\.html$/, '').replace(/\.html$/, '');
     const canonicals = [...head.matchAll(/<link\b[^>]*>/g)].map(match => match[0]).filter(tag => attribute(tag, 'rel') === 'canonical');
     assert.equal(canonicals.length, 1, `${page} needs exactly one canonical`);
@@ -76,12 +77,12 @@ for (const [page, html] of pages) {
       crumbs.forEach((item, index) => assert.equal(item.position, index + 1));
     } else if (page === 'index.html') {
       const app = schema['@graph'].find(node => node['@type'] === 'SoftwareApplication');
-      assert.equal(app.softwareVersion, '0.3.0-beta.1');
+      assert.equal(app.softwareVersion, '0.3.0-beta.2');
       assert.ok(html.includes(app.downloadUrl), 'Structured download must match the visible download');
       assert.ok(!app.aggregateRating && !app.review, 'Do not invent review markup');
       assert.match(html, /itemtype="https:\/\/schema.org\/SoftwareApplication"/);
       assert.ok(html.includes(`itemid="${origin}/#software"`), 'Microdata and JSON-LD must identify the same app');
-      assert.match(html, /itemprop="softwareVersion">0\.3\.0-beta\.1</);
+      assert.match(html, /itemprop="softwareVersion">0\.3\.0-beta\.2</);
     }
   }
   for (const [tag] of html.matchAll(/<img\b[^>]*>/g)) {
@@ -107,7 +108,7 @@ assert.ok(paths.some(path => /localSearchIndex.*\.js$/.test(path) || /local-sear
 const home = pages.get('index.html');
 assert.match(home, /srcset="[^"]+480w, [^"]+960w, [^"]+1600w"/);
 assert.ok(!home.includes('as="font"'), 'System fonts must not preload unused webfonts');
-assert.match(home, /releases\/download\/v0\.3\.0-beta\.1\/PearConnect-0\.3\.0-beta\.1-win-x64\.zip/);
+assert.match(home, /releases\/download\/v0\.3\.0-beta\.2\/PearConnect-0\.3\.0-beta\.2-win-x64\.zip/);
 assert.match(pages.get('docs/simple.html'), /21213/);
 assert.match(pages.get('docs/advanced.html'), /PearConnect\.Url/);
 assert.ok(!paths.some(path => /(?:^|\/)(?:\.env|settings\.json|node_modules|\.git)(?:$|\/)/.test(path)), 'Only public output belongs in the website');
@@ -138,7 +139,8 @@ for (const agent of ['*', 'Googlebot', 'OAI-SearchBot', 'ChatGPT-User', 'Twitter
 }
 const sitemap = await readFile(join(root, 'sitemap.xml'), 'utf8');
 const locations = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(match => match[1]);
-assert.equal(locations.length, pages.size - 1, 'Only indexable pages belong in the sitemap');
+assert.equal(locations.length, pages.size - 2, 'Only indexable pages belong in the sitemap');
+assert.ok(!locations.some(url => url.includes('/web/')), 'Private dashboard must not enter the sitemap');
 assert.ok(locations.every(url => url.startsWith(origin + '/') && !url.includes('404')));
 const headers = await readFile(join(root, '_headers'), 'utf8');
 assert.match(headers, /X-Robots-Tag: follow, max-image-preview:large/);

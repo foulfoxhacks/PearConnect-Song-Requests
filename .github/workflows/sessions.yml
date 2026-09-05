@@ -1,0 +1,39 @@
+name: Session relay and browser flows
+on:
+  push:
+    branches: [main]
+    paths: ['relay/**', 'website/**', 'src/**', 'test/helpers.js', '.github/workflows/sessions.yml']
+  pull_request:
+    paths: ['relay/**', 'website/**', 'src/**', 'test/helpers.js', '.github/workflows/sessions.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sessions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: npm ci --ignore-scripts
+      - run: npm ci
+        working-directory: relay
+      - run: npm audit --audit-level=moderate
+        working-directory: relay
+      - run: npm test
+        working-directory: relay
+      - run: npm ci
+        working-directory: website
+      - run: npx playwright install --with-deps chromium
+        working-directory: website
+      - run: npm run build
+        working-directory: website
+      - run: npm run test:sessions
+        working-directory: website
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Session-browser-screenshots
+          path: dist/session-browser/

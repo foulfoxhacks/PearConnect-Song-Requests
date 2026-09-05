@@ -8,7 +8,7 @@ const canonical = computed(() => 'https://pearconnect.mellozone.site/' + page.va
 </script>
 
 <template>
-  <div itemscope itemtype="https://schema.org/WebPage" :itemid="`${canonical}#webpage`">
+  <div itemscope itemtype="https://schema.org/WebPage" :itemid="`${canonical}#webpage`" :class="{ 'session-layout-page': page.frontmatter.session }">
     <meta itemprop="name" :content="`${page.title} | PearConnect`">
     <meta itemprop="url" :content="canonical">
     <meta itemprop="description" :content="page.description">

@@ -14,3 +14,7 @@
 
 /404.html
   X-Robots-Tag: noindex
+/web/*
+  X-Robots-Tag: noindex, follow
+  Referrer-Policy: no-referrer
+  Cache-Control: no-store

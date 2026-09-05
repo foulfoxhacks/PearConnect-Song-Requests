@@ -9,9 +9,11 @@
     "images": "node scripts/optimize-images.mjs",
     "preview": "wrangler pages dev dist --ip 127.0.0.1 --port 5173",
     "check": "node scripts/check-site.mjs",
+    "test:sessions": "node scripts/test-sessions.mjs",
     "deploy": "wrangler pages deploy dist --project-name pearconnect --branch main"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "sharp": "^0.35.4",
     "vitepress": "2.0.0-alpha.20",
     "vue": "^3.5.0",
