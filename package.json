@@ -12,7 +12,7 @@
     "doctor": "node scripts/doctor.mjs",
     "check": "node scripts/check.mjs",
     "test": "node scripts/test.mjs",
-    "test:smoke": "node test-smoke.mjs",
+    "test:smoke": "node scripts/smoke.mjs",
     "build:streamerbot": "node scripts/build-streamerbot.mjs",
     "check:streamerbot": "node scripts/build-streamerbot.mjs --check",
     "test:streamerbot": "node scripts/test-streamerbot.mjs"

@@ -41,7 +41,7 @@ async function main() {
     if (server) tasks.push(new Promise((resolve) => server.close(resolve)));
     await Promise.all(tasks);
     clearTimeout(forced);
-    process.exit(0);
+    process.exitCode = 0;
   };
   process.once('SIGINT', shutdown);
   process.once('SIGTERM', shutdown);
