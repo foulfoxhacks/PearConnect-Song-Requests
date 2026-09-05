@@ -3,3 +3,4 @@ dist/
 .vitepress/cache/
 .wrangler/
 .vitepress/theme/assets/desktop-*.webp
+.vitepress/theme/assets/sample-cover.webp

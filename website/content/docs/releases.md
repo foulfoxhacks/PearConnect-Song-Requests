@@ -5,6 +5,23 @@ description: Download the current PearConnect desktop preview and understand wha
 
 # Release notes
 
+## 0.3.0-beta.3 · Visual studio
+
+**5 September 2026** · Windows x64 · Portable ZIP
+
+[Download the current Windows preview](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/download/v0.3.0-beta.3/PearConnect-0.3.0-beta.3-win-x64.zip) · [Release and checksums](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/tag/v0.3.0-beta.3)
+
+- Live player artwork, elapsed/remaining time, duration and pause state in Overview.
+- A [visual studio](/docs/visual-studio) with live/sample previews, three OBS widget layouts, custom accents, surfaces, fonts and optional ambient animation.
+- A separate private read-only localhost overlay server. No player credentials or Last.fm data appear in OBS output.
+- Four desktop backgrounds, font and text-size choices, three original icon presets and a packaged Windows icon replacing Electron's default.
+- Optional Last.fm genre tags, listener counts and similar-track discovery using your own encrypted API key. This does not queue suggestions, scrobble or add Spotify playback.
+- A refreshed website with an interactive widget-style example and a new app preview.
+
+Ambient motion is decorative and follows play/pause; it does not capture or analyze audio. External Last.fm service availability needs verification with your own key. Automated checks use controlled music/image fixtures; an OBS and real-player rehearsal is still required. The Windows build remains an unsigned preview.
+
+Close the old app, extract the complete new ZIP and launch its `PearConnect.exe`. Existing settings are preserved. Website publication does not update Desktop.
+
 ## 0.3.0-beta.2 · Guided validation & session codes
 
 **5 September 2026** · Windows x64 · Portable ZIP

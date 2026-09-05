@@ -51,7 +51,7 @@
   --home-line: #334237;
   --home-width: 1340px;
   --home-gutter: 48px;
-  background: var(--home-bg);
+  background: radial-gradient(ellipse at 85% 7%, #679b5921, transparent 23%), var(--home-bg);
   color: var(--home-text);
   min-height: 100vh;
   font-size: 1rem;
@@ -222,3 +222,17 @@
   .doc-intro-links a + a { border-top: 1px solid var(--vp-c-divider); }
 }
 @media (prefers-reduced-motion: reduce) { .landing * { transition: none !important; scroll-behavior: auto !important; } }
+
+/* A restrained music-led identity: generous typography, fine rules and original artwork. */
+.hero-product { transform:perspective(1600px) rotateY(-5deg);transform-origin:left center; }
+.hero-product img { box-shadow:20px 28px 65px #0005;border-color:#79917166; }
+.visual-story { display:grid;grid-template-columns:.85fr 1.2fr;gap:48px;align-items:center; }
+.visual-story h2 em { font-style:normal;color:#d2ceef; }.landing .visual-guide { display:inline-flex;align-items:center;gap:18px;color:var(--home-accent);padding-block:18px;min-height:44px; }
+.visual-demo { min-width:0; }.demo-toolbar { display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px; }.demo-toolbar>span { color:var(--home-muted);font-size:.6875rem;letter-spacing:.1em; }.demo-toolbar>div { display:flex;gap:2px; }.demo-toolbar button { color:#becbbb;font-size:.8125rem;text-transform:capitalize;padding:10px 13px;min-height:44px;border-bottom:2px solid transparent; }.demo-toolbar button[aria-pressed=true] { color:#e2f3cb;border-color:#c9e5a4; }
+.demo-stage { display:flex;align-items:center;min-height:310px;padding:30px 24px;background:radial-gradient(ellipse at top right,#6b54794d,transparent 70%),#151e1d;border:1px solid #44554c; }
+.demo-now-playing { width:100%;display:flex;align-items:center;gap:25px;padding:20px;border-left:3px solid #c9e5a4;background:#0f1816; }.demo-now-playing>img { flex-shrink:0;width:155px;height:155px;object-fit:cover; }.demo-track { flex:1;min-width:0; }.demo-track .demo-label { font-size:.625rem;letter-spacing:.2em;color:#c6d7b8; }.demo-track h3 { font-size:1.9rem;line-height:1.2;margin:10px 0 5px;letter-spacing:-.035em; }.demo-track p { color:#b5c4af;font-size:.875rem; }.demo-progress { height:3px;background:#60725955;margin-top:20px; }.demo-progress>span { display:block;width:34%;height:100%;background:#c9e5a4; }.demo-times { display:flex;justify-content:space-between;gap:12px;font:11px/1.5 Consolas,monospace;color:#c9d9bf;margin-top:8px; }.demo-bars { display:flex;align-items:center;gap:4px;height:22px;margin-top:12px; }.demo-bars i { width:3px;height:calc(5px + mod(var(--bar) * 7, 15) * 1px);background:#a8c597; }
+.demo-stage[data-layout=compact] .demo-now-playing>img { width:80px;height:80px; }.demo-stage[data-layout=compact] .demo-now-playing { padding:18px;gap:18px; }.demo-stage[data-layout=compact] h3 { font-size:1.4rem;margin:4px 0; }.demo-stage[data-layout=compact] .demo-bars { display:none; }.demo-stage[data-layout=compact] .demo-progress { margin-top:12px; }
+.demo-stage[data-layout=minimal] .demo-now-playing { background:transparent; }.demo-stage[data-layout=minimal] .demo-now-playing>img { display:none; }.demo-stage[data-layout=minimal] h3 { font-size:2.6rem; }
+.landing .demo-caption { color:#aabc9f;font-size:.75rem;margin-top:12px; }.visual-details { grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr);gap:35px;border-top:1px solid var(--home-line);padding-top:30px; }.visual-details>div>span { color:#adbea0;font:12px Consolas,monospace; }.visual-details h3 { margin:12px 0 10px;font-size:1.2rem; }.visual-details p { font-size:.9375rem;color:var(--home-muted); }
+@media(max-width:1100px) { .visual-story { grid-template-columns:1fr;gap:30px; }.visual-story .section-heading>p:last-child { max-width:600px; }.hero-product { transform:none; } }
+@media(max-width:600px) { .demo-stage { min-height:270px;padding:20px 12px; }.demo-now-playing { padding:14px;gap:14px; }.demo-now-playing>img { width:90px;height:90px; }.demo-track h3 { font-size:1.25rem; }.demo-track p { font-size:.75rem; }.demo-times { font-size:10px; }.demo-toolbar { align-items:flex-start;flex-direction:column;gap:6px; }.demo-stage[data-layout=compact] .demo-now-playing>img { width:60px;height:60px; }.demo-stage[data-layout=compact] h3 { font-size:1.1rem; }.visual-details { grid-template-columns:1fr;gap:24px; }.demo-bars { gap:3px; } }

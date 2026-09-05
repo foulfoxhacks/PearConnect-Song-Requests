@@ -10,3 +10,4 @@ for (const width of [480, 960, 1600]) {
   await sharp(fileURLToPath(input)).resize({ width, withoutEnlargement: true }).webp({ quality: 85, effort: 6 }).toFile(fileURLToPath(output));
 }
 console.log('Generated three responsive product previews from the original screenshot.');
+await sharp(fileURLToPath(new URL('../../desktop/assets/sample-cover.png', import.meta.url))).resize(480).webp({ quality: 85, effort: 6 }).toFile(fileURLToPath(new URL('sample-cover.webp', directory)));

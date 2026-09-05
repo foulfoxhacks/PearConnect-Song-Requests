@@ -10,6 +10,7 @@
     "preview": "wrangler pages dev dist --ip 127.0.0.1 --port 5173",
     "check": "node scripts/check-site.mjs",
     "test:sessions": "node scripts/test-sessions.mjs",
+    "test:visuals": "node ../scripts/test-visuals.mjs",
     "deploy": "wrangler pages deploy dist --project-name pearconnect --branch main"
   },
   "devDependencies": {

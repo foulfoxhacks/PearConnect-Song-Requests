@@ -49,7 +49,9 @@ VitePress is pinned to `2.0.0-alpha.20`, the current upstream preview using patc
 
 ## Downloads
 
-The Windows link points to the versioned GitHub prerelease `v0.3.0-beta.1`, not a temporary Actions artifact or the repository's unrelated legacy `release` tag. Update the homepage, install guide and release notes together when publishing the next version. Keep build/source evidence and preview limitations accurate.
+The Windows link points to the versioned GitHub prerelease `v0.3.0-beta.3`, not a temporary Actions artifact or the repository's unrelated legacy `release` tag. Update the homepage, install guide and release notes together when publishing the next version. Keep build/source evidence and preview limitations accurate.
+
+The homepage's widget-style selector uses original sample artwork from `desktop/assets/sample-cover.png`, converted to WebP at build time. `npm run test:visuals` exercises that selector and the actual private localhost OBS source in isolated Chromium. Set `PEARCONNECT_CHROME` to an installed Chrome executable or install Playwright Chromium. The UI test covers 320–1440px pages, three widget layouts, artwork, pause/seek timing, safe rendering, disconnects and reduced motion. No real player is controlled.
 
 ## Reference direction
 

@@ -13,7 +13,7 @@ The project is independent community software, not an official service endorsed 
 
 ## Credentials
 
-The desktop stores player credentials, webhook secrets and Twitch tokens encrypted with the operating system's available credential facilities. Credentials stay in the privileged application process and are not sent to the interface renderer.
+The desktop stores player credentials, webhook secrets, Twitch tokens, an optional Last.fm key and the private OBS link credential encrypted with the operating system's available credential facilities. Saved credentials stay in the privileged application process and are not included in renderer snapshots. The OBS link can be deliberately copied to the clipboard.
 
 If secure storage is unavailable, the desktop does not fall back to plaintext. Moving settings to another machine or OS account may require authorizing again.
 
@@ -24,6 +24,14 @@ The CLI uses a local `.env` file. Protect that file and do not commit or share i
 Player and TikFinity addresses are restricted to loopback. The Advanced webhook uses its own secret, rejects browser origins and restricts local hostnames. Do not expose the request engine's ports through a public tunnel or router forwarding as part of ordinary setup.
 
 The desktop communicates through a fixed set of validated operations; it does not grant its renderer arbitrary filesystem, shell or HTTP access.
+
+## Artwork, overlays and music discovery
+
+The optional OBS widget uses a separate read-only server bound to `127.0.0.1`, normally port 8787. It requires a private link and exposes only sanitized track information, widget styles and the current processed artwork. It rejects mutations, foreign Host/Origin headers and unknown paths. The public website does not receive this data. Resetting the link revokes the old credential.
+
+Artwork is fetched without player credentials from supported HTTPS YouTube image hosts. Redirects, oversized responses and unsupported image types are rejected; one resized image is held in memory. Ambient motion does not capture microphone or system audio.
+
+Last.fm enrichment is off by default. When enabled, track title and artist are sent directly to Last.fm using your own key. Bounded in-memory caching reduces repeated requests. Only text metadata and catalogue links appear in Desktop; Last.fm data is excluded from overlays and diagnostics. [Visual studio documentation](./visual-studio) explains the controls and service terms.
 
 ## Request activity
 

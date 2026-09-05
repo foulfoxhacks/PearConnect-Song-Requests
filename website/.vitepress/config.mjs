@@ -45,6 +45,7 @@ export default defineConfig({
         { text: 'Run your requests', items: [
           { text: 'Commands', link: '/docs/commands' },
           { text: 'Session-code fallback', link: '/docs/session-codes' },
+          { text: 'Visual studio & overlays', link: '/docs/visual-studio' },
           { text: 'Rules & permissions', link: '/docs/rules' },
           { text: 'CLI & headless', link: '/docs/cli' }
         ] },

@@ -3,9 +3,11 @@ import { ref } from 'vue';
 import previewSmall from './assets/desktop-480.webp';
 import previewMedium from './assets/desktop-960.webp';
 import previewLarge from './assets/desktop-1600.webp';
+import sampleCover from './assets/sample-cover.webp';
 
 const menuOpen = ref(false);
-const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/download/v0.3.0-beta.2/PearConnect-0.3.0-beta.2-win-x64.zip';
+const widgetStyle = ref('cover');
+const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/download/v0.3.0-beta.3/PearConnect-0.3.0-beta.3-win-x64.zip';
 </script>
 
 <template>
@@ -33,7 +35,7 @@ const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/rele
         <div class="hero-inner">
           <p class="kicker"><span class="status-dot" aria-hidden="true"></span> SONG REQUESTS FOR YOUR STREAM</p>
           <h1 id="hero-title">Your stream.<br><em>In tune.</em></h1>
-          <p class="hero-description">Turn live chat into your next song. Connect your community to Pear Desktop, with you in control of every request.</p>
+          <p class="hero-description">Let your chat pick the soundtrack. Bring it to life with album artwork, a live playback clock and overlays that feel like you.</p>
           <div class="hero-actions">
             <a class="download-button" :href="download">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5l8-1v7H3zm10-1 8-1v8h-8zM3 13h8v7l-8-1zm10 0h8v8l-8-1z"/></svg>
@@ -41,7 +43,7 @@ const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/rele
             </a>
             <a href="/docs/" class="guide-link">Read the setup guide <span aria-hidden="true">→</span></a>
           </div>
-          <p class="release-caption">Free &amp; open source <span>·</span> v0.3.0-beta.2 preview</p>
+          <p class="release-caption">Free &amp; open source <span>·</span> v0.3.0-beta.3 preview</p>
           <p class="hero-detail">Windows x64. Portable download. No separate runtime to install.</p>
         </div>
         <figure class="hero-product">
@@ -58,6 +60,12 @@ const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/rele
         <span>WORKS WITH YOUR SETUP</span>
         <ul aria-label="Supported integrations"><li>Pear Desktop</li><li>TikFinity</li><li>Streamer.bot</li><li>Twitch</li><li>YouTube</li></ul>
       </div>
+
+      <section class="visual-story section-wrap" aria-labelledby="visual-title">
+        <div class="section-heading"><p class="kicker">MADE TO BE SEEN. BUILT TO BE YOURS.</p><h2 id="visual-title">More than a queue.<br><em>A little atmosphere.</em></h2><p>Keep the music in view. Customize a now-playing widget in Desktop, preview your design, then add it to OBS.</p><a class="visual-guide" href="/docs/visual-studio">Explore the visual studio <span aria-hidden="true">↗</span></a></div>
+        <div class="visual-demo"><div class="demo-toolbar"><span>TRY A WIDGET STYLE</span><div role="group" aria-label="Sample widget layout"><button v-for="style in ['cover', 'compact', 'minimal']" :key="style" :aria-pressed="widgetStyle === style" @click="widgetStyle = style">{{ style }}</button></div></div><div class="demo-stage" :data-layout="widgetStyle"><article class="demo-now-playing" aria-label="Example now-playing widget"><img :src="sampleCover" width="180" height="180" alt="Original Night Drive sample cover with green curved lines and a golden moon" loading="lazy" decoding="async"><div class="demo-track"><span class="demo-label">ON THE AUX</span><h3>Night Drive</h3><p>PearConnect Sessions</p><div class="demo-progress" aria-hidden="true"><span></span></div><div class="demo-times"><span>1:23 / 4:06</span><span>2:43 left</span></div><div class="demo-bars" aria-hidden="true"><i v-for="bar in 22" :key="bar" :style="{ '--bar': bar }"></i></div></div></article></div><p class="demo-caption">Illustrative track and timing. Your overlay shows live Pear Desktop data.</p></div>
+        <div class="visual-details"><div><span>01</span><h3>The artwork follows along.</h3><p>Fresh art when the track changes. Elapsed time, time remaining and pause state from your player.</p></div><div><span>02</span><h3>Your scene. Your signature.</h3><p>Three layouts, light or transparent surfaces, custom accents and fonts. Preview before you publish.</p></div><div><span>03</span><h3>Set the mood.</h3><p>Desktop background and icon presets, optional ambient motion, and Last.fm discovery with your own key.</p></div></div>
+      </section>
 
       <section class="how section-wrap" id="how-it-works" aria-labelledby="how-title">
         <div class="section-heading"><p class="kicker">01 / GET CONNECTED</p><h2 id="how-title">From chat to queue.<br>In three steps.</h2><p>Your player handles the music. PearConnect handles the requests.</p></div>
@@ -103,7 +111,7 @@ const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/rele
         <div class="download-section section-width">
           <div><p class="kicker">YOUR NEXT STREAM STARTS HERE</p><h2 id="download-title">Bring your chat<br>into the mix.</h2><p>Download PearConnect, extract the complete folder and open the app. Your first request starts with a connection.</p></div>
           <div class="download-options">
-            <div class="download-meta"><span>WINDOWS x64</span><span itemprop="softwareVersion">0.3.0-beta.2</span></div>
+            <div class="download-meta"><span>WINDOWS x64</span><span itemprop="softwareVersion">0.3.0-beta.3</span></div>
             <a class="download-button" :href="download" itemprop="downloadUrl">Download the Windows preview <span aria-hidden="true">↓</span></a>
             <p>Portable ZIP · Free &amp; open source</p>
             <div class="download-links"><a href="/docs/install">Installation guide <span aria-hidden="true">↗</span></a><a href="/docs/cli">CLI setup <span aria-hidden="true">↗</span></a></div>

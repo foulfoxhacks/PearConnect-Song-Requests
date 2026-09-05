@@ -32,6 +32,8 @@ jobs:
         working-directory: website
       - run: npm run test:sessions
         working-directory: website
+      - run: npm run test:visuals
+        working-directory: website
       - uses: actions/upload-artifact@v4
         if: always()
         with:

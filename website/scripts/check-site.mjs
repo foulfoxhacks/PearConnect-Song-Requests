@@ -77,12 +77,12 @@ for (const [page, html] of pages) {
       crumbs.forEach((item, index) => assert.equal(item.position, index + 1));
     } else if (page === 'index.html') {
       const app = schema['@graph'].find(node => node['@type'] === 'SoftwareApplication');
-      assert.equal(app.softwareVersion, '0.3.0-beta.2');
+      assert.equal(app.softwareVersion, '0.3.0-beta.3');
       assert.ok(html.includes(app.downloadUrl), 'Structured download must match the visible download');
       assert.ok(!app.aggregateRating && !app.review, 'Do not invent review markup');
       assert.match(html, /itemtype="https:\/\/schema.org\/SoftwareApplication"/);
       assert.ok(html.includes(`itemid="${origin}/#software"`), 'Microdata and JSON-LD must identify the same app');
-      assert.match(html, /itemprop="softwareVersion">0\.3\.0-beta\.2</);
+      assert.match(html, /itemprop="softwareVersion">0\.3\.0-beta\.3</);
     }
   }
   for (const [tag] of html.matchAll(/<img\b[^>]*>/g)) {
@@ -108,7 +108,7 @@ assert.ok(paths.some(path => /localSearchIndex.*\.js$/.test(path) || /local-sear
 const home = pages.get('index.html');
 assert.match(home, /srcset="[^"]+480w, [^"]+960w, [^"]+1600w"/);
 assert.ok(!home.includes('as="font"'), 'System fonts must not preload unused webfonts');
-assert.match(home, /releases\/download\/v0\.3\.0-beta\.2\/PearConnect-0\.3\.0-beta\.2-win-x64\.zip/);
+assert.match(home, /releases\/download\/v0\.3\.0-beta\.3\/PearConnect-0\.3\.0-beta\.3-win-x64\.zip/);
 assert.match(pages.get('docs/simple.html'), /21213/);
 assert.match(pages.get('docs/advanced.html'), /PearConnect\.Url/);
 assert.ok(!paths.some(path => /(?:^|\/)(?:\.env|settings\.json|node_modules|\.git)(?:$|\/)/.test(path)), 'Only public output belongs in the website');
