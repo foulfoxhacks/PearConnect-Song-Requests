@@ -46,3 +46,11 @@ Only mark live acceptance complete after these checks have actually been perform
 Functional tests and a vulnerability audit answer different questions. Preserve audit findings rather than suppressing them to make a check green. Dependencies and advisory data change; inspect the current `npm audit` output after installations or upgrades. Any transitive override must be documented and regression-tested, not forced across incompatible major versions.
 
 The 2026-09-05 dependency refresh pins compatible transitive overrides `qs=6.16.0` and `body-parser=1.20.6`. The clean-install audit reported zero known vulnerabilities. These address the upstream advisories [qs](https://github.com/advisories/GHSA-4mjr-xmp4-gh2g) and [body-parser](https://github.com/advisories/GHSA-v422-hmwv-36x6). Remove the overrides only after parent dependencies resolve to patched versions and the regression suite still passes.
+
+## Recorded automated result: 2026-09-05
+
+Implementation commit `ca90d94d3ee9ddc9f248de03e5dc47adddec8fc4` passed [GitHub Actions run 33979258651](https://github.com/foulfoxhacks/PearConnect-Song-Requests/actions/runs/33979258651): all four Windows/Linux and Node 22/24 jobs, the Windows C# contract job, and the dependency audit. Each Node target passed the original 12 smoke assertions and 56 added tests. The C# harness passed 17 assertions and verified exact local POST payloads, four enqueues, and one authorized skip against its fake player. The clean-install audit found zero known vulnerabilities at that time.
+
+The original smoke file is fingerprint-checked and unchanged. Its wrapper preserves its requested success/failure code but lets network handles drain, avoiding the Windows Node 24 forced-exit assertion observed in the first CI pass. No failing assertion was removed, skipped, or converted to a warning.
+
+A separate local real-process check also verified dry-run startup, all Doctor requests, and clean SIGTERM shutdown. These results do not mark the live acceptance checklist complete.
