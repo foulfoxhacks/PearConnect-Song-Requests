@@ -23,7 +23,7 @@ npm audit --audit-level=moderate
 npm run deploy
 ```
 
-Deploy requires a Cloudflare account authorized for this project through Wrangler. The checked `wrangler.jsonc` identifies the account and static output; it contains no credential. The current setup uses direct uploads. GitHub CI validates/builds the website but does not deploy it automatically or need a Cloudflare credential.
+Deploy requires a Cloudflare account authorized for this project through Wrangler. The checked `wrangler.jsonc` identifies the project and static output; it contains no credential. Pages does not accept `account_id` in this file. If you have access to multiple accounts, set `CLOUDFLARE_ACCOUNT_ID` in your shell before deploying (the project owner's account ID is `61ac4bebbe92f78de54198ee6c9a3b3c`). The current setup uses direct uploads. GitHub CI validates/builds the website but does not deploy it automatically or need a Cloudflare credential.
 
 `check` verifies generated routes, local links, anchors, assets and the local search index. Pages serves actual HTML for each documentation route and the generated 404 page. The `_headers` file sets response headers; inline script/style allowances support VitePress's theme bootstrap and rendered styling.
 
