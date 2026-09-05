@@ -9,6 +9,10 @@ import { startTikfinity } from './platforms/tikfinity.js';
 
 const methods = { request: 'handleRequest', nowPlaying: 'handleNowPlaying', queue: 'handleQueuePeek', skip: 'handleSkip' };
 export const RULE_KEYS = ['COOLDOWN_SECONDS', 'MAX_SONG_SECONDS', 'MAX_PER_USER', 'BLOCKLIST', 'REQUEST_ALLOWLIST', 'SKIP_ALLOWLIST', 'CMD_REQUEST', 'CMD_NOWPLAYING', 'CMD_QUEUE', 'CMD_SKIP'];
+export function validateRuleUpdates(values, current) {
+  if (!values || typeof values !== 'object' || Array.isArray(values) || Object.keys(values).some(key => !RULE_KEYS.includes(key)) || Object.values(values).some(value => typeof value !== 'string' || value.length > 4096)) throw new InputError('Supply supported rule fields as strings.');
+  return loadConfig({ ...current, ...values, DRY_RUN: 'true' });
+}
 
 export class PearConnectEngine extends EventEmitter {
   constructor(config, { player = new YTMDClient(config), logger, lock = acquireInstance, startSocket, startWebhook = startTikfinity, connectPlatforms = true } = {}) {
@@ -125,9 +129,7 @@ export class PearConnectEngine extends EventEmitter {
   }
 
   updateRules(values) {
-    if (!values || typeof values !== 'object' || Array.isArray(values) || Object.keys(values).some(key => !RULE_KEYS.includes(key)) || Object.values(values).some(value => typeof value !== 'string' || value.length > 4096)) throw new InputError('Supply supported rule fields as strings.');
-    const merged = { ...this.ruleValues(), ...values };
-    const next = loadConfig({ ...merged, DRY_RUN: 'true' });
+    const next = validateRuleUpdates(values, this.ruleValues());
     for (const key of ['cooldownSeconds', 'maxSongSeconds', 'maxPerUser', 'blocklist', 'requestAllowlist']) this.config[key] = next[key];
     // Existing adapter references and accounting remain valid.
     Object.assign(this.config.commands, next.commands);
@@ -181,16 +183,26 @@ export class PearConnectEngine extends EventEmitter {
     entry.code = result.code; entry.message = result.message;
     entry.state = result.outcomeUncertain ? 'outcome_uncertain' : result.code === 'added' ? 'enqueue_confirmed' : result.ok ? 'completed' : ['upstream_error', 'upstream_timeout', 'internal_error', 'not_ready'].includes(result.code) ? 'failed' : 'rejected';
     if (['upstream_error', 'upstream_timeout'].includes(result.code)) this.playerState = 'disconnected';
-    this.log.info(`[command] ${source}/${command}: ${result.code}`);
+    this.log.info(`[command] ${source}/${command}: ${result.code} · ${result.message}`);
     this.changed(); return result;
   }
 
-  async stop() {
+  stop() {
+    if (this.stopPromise) return this.stopPromise;
+    this.stopPromise = this.stopInternal().finally(() => { this.stopPromise = null; });
+    return this.stopPromise;
+  }
+
+  async stopInternal() {
     if (this.lifecycle === 'stopped') return;
     this.lifecycle = 'stopping'; this.pauseRequests();
     this.socket?.stop(); this.socket = null;
-    try { this.youtube?.stop(); } catch { /* Already stopped. */ }
-    await Promise.allSettled([...(this.twitch ? [Promise.resolve().then(() => this.twitch.disconnect())] : []), ...this.active]);
+    await Promise.allSettled([
+      ...(this.youtube ? [Promise.resolve().then(() => this.youtube.stop())] : []),
+      ...(this.twitch ? [Promise.resolve().then(() => this.twitch.disconnect())] : []),
+      ...(this.playerCheck ? [this.playerCheck] : []), ...this.active,
+    ]);
+    this.twitch = null; this.youtube = null;
     if (this.server) await new Promise(resolve => { this.server.close(resolve); this.server.closeIdleConnections?.(); });
     this.server = null;
     await this.releaseLock?.(); this.releaseLock = null;

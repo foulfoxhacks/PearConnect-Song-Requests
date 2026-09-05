@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'">
+  <title>PearConnect Desktop</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="renderer.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-icon">P</span><div>PearConnect<small>YOUR STREAM. YOUR SOUND.</small></div></div>
+    <nav aria-label="Main navigation">
+      <button data-view="dashboard" class="selected">Dashboard</button>
+      <button data-view="requests">Requests &amp; queue</button>
+      <button data-view="rules">Rules</button>
+      <button data-view="connections">Connections</button>
+      <button data-view="activity">Activity &amp; diagnostics</button>
+    </nav>
+    <div class="sidebar-bottom"><span class="live-dot"></span> Runs on your computer<p>Music stays in Pear Desktop.</p><button data-view="setup" class="link-button">Open setup guide →</button><small>DESKTOP PREVIEW</small></div>
+  </aside>
+  <main>
+    <header><div><span class="eyebrow">STREAM CONTROL</span><h1 id="page-title">Dashboard</h1></div><span class="mode-badge" id="mode-label">Simple connection</span></header>
+    <div id="notice" role="status" aria-live="polite" hidden></div>
+    <div id="startup-error" class="warning" hidden></div>
+
+    <section data-page="dashboard">
+      <div class="welcome" id="welcome"><div><span class="eyebrow">LET’S GET CONNECTED</span><h2>Your first request starts here.</h2><p>Authorize your player, connect chat, and choose when requests begin.</p></div><button data-view="setup" class="primary">Set up PearConnect →</button></div>
+      <div class="status-grid">
+        <article class="card"><span class="label">PEAR DESKTOP</span><h3 id="player-state">Not configured</h3><p id="track">No playback information yet</p><button data-action="testPlayer">Test connection</button></article>
+        <article class="card"><span class="label">TIKTOK INPUT</span><h3 id="input-state">Disconnected</h3><p id="chat-detail">Waiting for a chat event</p><button data-view="connections">Manage connection</button></article>
+        <article class="card intake"><span class="label">SONG REQUESTS</span><h3 id="intake-state">Paused</h3><p>Pausing requests leaves the music playing.</p><button id="intake-toggle" data-action="resume" class="primary">Start accepting requests</button></article>
+      </div>
+      <article class="card playback"><div><span class="label">NOW PLAYING · FROM PEAR DESKTOP</span><h2 id="now-playing">Connect your player</h2><p id="now-artist">Enqueue confirmation appears in request history.</p></div><button data-action="openPlayer">Open player</button></article>
+      <div class="section-title"><h2>Recent requests</h2><button data-view="requests" class="link-button">View history →</button></div>
+      <div id="recent" class="activity-list"></div>
+      <p class="capability" id="reply-capability">TikTok chat replies: not configured. Command results appear here.</p>
+    </section>
+
+    <section data-page="setup" hidden>
+      <p class="intro">A few steps, then you’re ready to test. PearConnect keeps requests paused until you enable them.</p>
+      <div class="steps">
+        <article class="card step"><span class="number">1</span><div><h2>Choose your connection</h2><p>Both options use the same request rules and work in the desktop or CLI.</p><div class="button-row"><button data-mode="simple" class="primary">Simple · TikFinity Connection</button><button data-mode="advanced">Advanced · Streamer.bot &amp; Automation</button></div></div></article>
+        <article class="card step"><span class="number">2</span><div><h2>Connect music</h2><p>Open Pear Desktop and enable its API Server plugin. Approve the authorization prompt in the player; PearConnect saves the credential securely.</p><div class="button-row"><button data-action="authorize" class="primary">Authorize PearConnect</button><button data-view="connections">Player address &amp; settings</button></div></div></article>
+        <article class="card step"><span class="number">3</span><div><h2>Connect chat</h2><p>For Simple, keep TikFinity Desktop running and connected to your livestream. For Advanced, import the action package and configure Streamer.bot.</p><button data-view="connections">Open connections →</button></div></article>
+        <article class="card step"><span class="number">4</span><div><h2>Set your request rules</h2><p>Choose commands, cooldowns, duration limits, blocklists and allowed users.</p><button data-view="rules">Edit rules →</button></div></article>
+        <article class="card step"><span class="number">5</span><div><h2>Test safely</h2><p>Validate a sample request without contacting the player, changing playback or spending a request slot. Duration and search-result checks require a real request.</p><form id="sample-form"><label>Viewer handle<input name="user" value="test_viewer" required maxlength="100"></label><label>Artist and song<input name="query" value="Björk Jóga" maxlength="512" required></label><button class="primary">Validate sample request</button></form></div></article>
+        <article class="card step"><span class="number">6</span><div><h2>Enable requests</h2><p>Test the player connection first. An open chat socket alone doesn’t prove commands are arriving.</p><button data-action="resume" class="primary">Start accepting requests</button></div></article>
+      </div>
+    </section>
+
+    <section data-page="requests" hidden>
+      <p class="intro">Request history records PearConnect’s results. The player queue is a separate snapshot from Pear Desktop.</p>
+      <article class="card"><div class="section-title"><h2>Request history</h2><span class="muted">Last 200 commands · this session</span></div><div id="history" class="activity-list"></div></article>
+      <article class="card space-top"><div class="section-title"><h2>Player queue</h2><button data-action="playerQueue">Refresh player queue</button></div><p id="queue-note">Read the current queue from Pear Desktop. No ownership is inferred.</p><div id="player-queue" class="activity-list"></div></article>
+      <p class="capability">The per-user request limit uses an approximate duration window. Cancel, remove and reorder controls await reliable queue reconciliation.</p>
+    </section>
+
+    <section data-page="rules" hidden>
+      <p class="intro">Rules apply immediately to all inputs. Existing cooldowns and tracked requests are retained. Update matching Streamer.bot command mappings separately.</p>
+      <form id="rules-form" class="card form-grid">
+        <label>Request command (without !)<input name="CMD_REQUEST" required pattern="[a-zA-Z0-9_-]{1,32}"></label>
+        <label>Now-playing command<input name="CMD_NOWPLAYING" required pattern="[a-zA-Z0-9_-]{1,32}"></label>
+        <label>Next-track command<input name="CMD_QUEUE" required pattern="[a-zA-Z0-9_-]{1,32}"></label>
+        <label>Skip command<input name="CMD_SKIP" required pattern="[a-zA-Z0-9_-]{1,32}"></label>
+        <label>Cooldown, seconds<input name="COOLDOWN_SECONDS" type="number" min="0" max="86400" required><small>Time between accepted requests from one viewer. 0 disables.</small></label>
+        <label>Maximum song duration, seconds<input name="MAX_SONG_SECONDS" type="number" min="0" max="604800" required><small>Unknown durations are rejected while enabled. 0 disables.</small></label>
+        <label>Tracked requests per user<input name="MAX_PER_USER" type="number" min="0" max="1000" required><small>Approximate duration window, not pending queue ownership. 0 disables.</small></label>
+        <label>Blocked phrases<input name="BLOCKLIST" maxlength="4096"><small>Comma-separated phrases matched in queries, titles and artists.</small></label>
+        <label class="wide">Request permissions<input name="REQUEST_ALLOWLIST" maxlength="4096" placeholder="Empty allows everyone"><small>Comma-separated tiktok:handle, twitch:login or youtube:exact_channel_ID. Nonempty limits requests to listed users.</small></label>
+        <label class="wide">Skip permissions<input name="SKIP_ALLOWLIST" maxlength="4096" placeholder="Empty permits nobody"><small>Same identity format. YouTube always requires the exact channel ID.</small></label>
+        <div class="wide"><button class="primary">Save rules</button></div>
+      </form>
+    </section>
+
+    <section data-page="connections" hidden>
+      <article class="card"><div class="section-title"><h2>Connection mode</h2><span id="connection-current" class="muted"></span></div><div class="button-row"><button data-mode="simple">Simple · TikFinity Connection</button><button data-mode="advanced">Advanced · Streamer.bot &amp; Automation</button></div><p>Switching modes pauses requests and waits for outstanding work. Enable requests again when ready.</p><button data-action="importConfig">Import existing .env configuration</button></article>
+      <form id="connections-form" class="card form-grid space-top">
+        <h2 class="wide">Pear Desktop</h2>
+        <label>Player API address<input name="YTMD_HOST" type="url" required><small>Localhost only. Changing the address clears the player credential.</small></label>
+        <label>Authorization client ID<input name="YTMD_CLIENT_ID" maxlength="100" required></label>
+        <label>Player timeout, milliseconds<input name="YTMD_TIMEOUT_MS" type="number" min="100" max="60000" required></label>
+        <div><p id="credential-state">Authorization needed</p><button type="button" data-action="authorize">Authorize PearConnect</button></div>
+        <h2 class="wide">TikFinity</h2>
+        <label class="wide">Local event WebSocket<input name="TIKFINITY_WS_URL" type="url" required><small>Simple mode receives events only. TikFinity Desktop must run on this computer.</small></label>
+        <label>Local webhook port<input name="TIKFINITY_PORT" type="number" min="0" max="65535" required><small>Also serves authenticated CLI status. 0 disables the listener.</small></label>
+        <div><p id="connection-event">Last event: never</p><p id="connection-command">Last command: never</p></div>
+        <details class="wide"><summary>Twitch and YouTube settings</summary><div class="form-grid space-top">
+          <label>Twitch channel<input name="TWITCH_CHANNEL"><small>Empty disables Twitch.</small></label><label>Twitch bot username<input name="TWITCH_USERNAME"></label>
+          <label>Twitch OAuth token<input name="TWITCH_OAUTH" type="password" autocomplete="off"><small>Leave blank to retain the saved token.</small></label>
+          <label>YouTube channel ID<input name="YOUTUBE_CHANNEL_ID"><small>Unofficial read-only chat input. Empty disables.</small></label>
+        </div></details>
+        <div class="wide button-row"><button class="primary">Save &amp; reconnect</button><button type="button" data-action="testPlayer">Test player</button><button type="button" data-action="reconnect">Connect</button><button type="button" data-action="disconnect">Disconnect inputs</button></div>
+        <p class="wide muted">Saving connections pauses requests and reconnects the engine. Music already in the player continues.</p>
+      </form>
+      <article class="card space-top" id="advanced-card" hidden><h2>Streamer.bot &amp; automation</h2><p>Import the five-action package, configure PearConnect.BaseUrl and PearConnect.Secret, then map TikFinity commands to the actions. The Connection Test action validates the full route without playback changes.</p><div class="button-row"><button data-action="copyEndpoint">Copy endpoint</button><button data-action="revealSecret">Reveal webhook secret</button><button data-action="rotateSecret">Rotate webhook secret</button><button data-action="exportActions">Export action package</button><button data-action="testIntegration">Test integration</button></div><p>Secret rotation pauses requests. Update Streamer.bot’s persisted secret before resuming. TikTok chat replies require the separate TikFinity chatbot relay.</p></article>
+      <p id="storage-state" class="capability"></p>
+    </section>
+
+    <section data-page="activity" hidden>
+      <article class="card"><h2>Activity</h2><p>Request-related results only. Unrelated chat messages are not archived.</p><div id="all-activity" class="activity-list"></div></article>
+      <details class="card space-top"><summary>Technical log · this session</summary><pre id="technical-log"></pre></details>
+      <article class="card space-top"><h2>Diagnostic report</h2><p>Review the exact report before exporting. Credentials, viewer identities, request text and raw logs are excluded.</p><div class="button-row"><button data-action="previewDiagnostics">Preview diagnostic report</button><button data-action="exportDiagnostics" id="export-report" disabled>Export previewed report</button></div><pre id="diagnostic-preview" hidden></pre></article>
+    </section>
+  </main>
+</body>
+</html>

@@ -6,7 +6,10 @@ import { unlink } from 'node:fs/promises';
 
 export function instanceAddress() {
   const id = createHash('sha256').update(homedir()).digest('hex').slice(0, 20);
-  return process.platform === 'win32' ? `\\\\.\\pipe\\pearconnect-${id}` : join(tmpdir(), `pearconnect-${id}.sock`);
+  if (process.platform === 'win32') return `\\\\.\\pipe\\pearconnect-${id}`;
+  // Linux abstract sockets are kernel-owned and disappear on crashes without a stale-file race.
+  if (process.platform === 'linux') return `\0pearconnect-${id}`;
+  return join(tmpdir(), `pearconnect-${id}.sock`);
 }
 
 export async function acquireInstance(address = instanceAddress()) {

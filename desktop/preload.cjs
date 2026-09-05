@@ -1,0 +1,15 @@
+const { contextBridge, ipcRenderer } = require('electron');
+const call = (operation, payload) => ipcRenderer.invoke('pearconnect', operation, payload);
+// No raw IPC, HTTP, filesystem, shell, credential read or arbitrary command API.
+contextBridge.exposeInMainWorld('pearconnect', Object.freeze({
+  snapshot: () => call('snapshot'), testPlayer: () => call('testPlayer'), authorize: () => call('authorize'),
+  pause: () => call('pause'), resume: () => call('resume'), mode: value => call('mode', value),
+  rules: values => call('rules', values), connections: values => call('connections', values),
+  testRequest: values => call('testRequest', values), playerQueue: () => call('playerQueue'),
+  testIntegration: () => call('testIntegration'),
+  reconnect: () => call('reconnect'), disconnect: () => call('disconnect'),
+  importConfig: () => call('importConfig'), copyEndpoint: () => call('copyEndpoint'),
+  revealSecret: () => call('revealSecret'), rotateSecret: () => call('rotateSecret'),
+  exportActions: () => call('exportActions'), openPlayer: () => call('openPlayer'),
+  previewDiagnostics: () => call('previewDiagnostics'), exportDiagnostics: () => call('exportDiagnostics'),
+}));

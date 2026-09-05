@@ -2,7 +2,7 @@
 
 ## Shared engine and Simple connection
 
-The shared `PearConnectEngine` now owns commands, moderation, intake state, activity and lifecycle. The CLI uses this engine; graphical controls will use the same operations. Existing configurations with no `CONNECTION_MODE` remain Advanced. Newly generated `.env` files select Simple and start paused.
+The shared `PearConnectEngine` now owns commands, moderation, intake state, activity and lifecycle. Both the CLI and the [desktop preview](DESKTOP.md) use these operations. Existing configurations with no `CONNECTION_MODE` remain Advanced. Newly generated `.env` files select Simple and start paused.
 
 ```sh
 npm start -- --mode simple --dry-run --accept-requests

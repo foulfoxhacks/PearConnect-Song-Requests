@@ -17,6 +17,12 @@
 
 Audited baseline: `0bb62c7`. Added shared engine lifecycle, repairable disconnected setup, shared command parsing and permissions, cross-input capacity, intake cancellation before enqueue, bounded request activity, sanitized diagnostics, instance exclusion, direct TikFinity WebSocket input and CLI controls. Preserved native webhook authentication, Origin/host guards, POST-only mutations and the unchanged Streamer.bot package. Local original smoke assertions and 67 Node regression tests pass. See `docs/NEXT-VERSION.md` for migration and the distinction between synthetic fixtures, real loopback tests and outstanding live acceptance.
 
+## Desktop preview audit (2026-09-05)
+
+Added the Electron console with setup, authorization, rules, connections, request activity, read-only player queue and diagnostic preview/export. Added OS-encrypted credentials, restricted custom-protocol assets, isolated/sandboxed renderer and sender-validated fixed IPC operations. Added portable Windows packaging with a production-only dependency stage and packaged-file checks. CLI remains independently installable with `npm ci --omit=dev --ignore-scripts`.
+
+Local checks: 71 Node tests plus original smoke suite pass; real hidden Electron tests pass for OS-encrypted storage, isolated renderer, approved/invalid IPC operations, form submission and plain-text handling of injected markup. Windows portable build completes. npm audit reports zero known vulnerabilities, including desktop tooling. This does not substitute for fresh-machine/live-stream acceptance; see `docs/DESKTOP.md`.
+
 ## Integration hardening pass
 
 Baseline: `0a82358bcae8011f23050191aaa41d88fc267ec3`.

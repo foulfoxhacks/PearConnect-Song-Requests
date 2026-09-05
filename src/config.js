@@ -59,6 +59,8 @@ export function loadConfig(env = process.env, { allowUnconfigured = false } = {}
   if (timeoutMs < 100) throw new InputError('YTMD_TIMEOUT_MS must be between 100 and 60000.');
   const secret = (env.TIKFINITY_SECRET || '').trim();
   if (secret.length > 256 || /[^\x21-\x7e]/.test(secret)) throw new InputError('TIKFINITY_SECRET must be up to 256 printable ASCII characters without spaces.');
+  const clientId = (env.YTMD_CLIENT_ID || 'ytmd-stream-bot').trim();
+  if (!/^[a-zA-Z0-9_-]{1,100}$/.test(clientId)) throw new InputError('YTMD_CLIENT_ID must be 1-100 letters, digits, underscores or hyphens.');
   const twitch = { channel: env.TWITCH_CHANNEL?.trim(), username: env.TWITCH_USERNAME?.trim(), oauth: env.TWITCH_OAUTH?.trim() };
   if (!dryRun && twitch.channel && (!twitch.username || !twitch.oauth)) {
     throw new InputError('TWITCH_CHANNEL requires TWITCH_USERNAME and TWITCH_OAUTH; clear the channel to disable Twitch.');
@@ -67,7 +69,7 @@ export function loadConfig(env = process.env, { allowUnconfigured = false } = {}
     host: apiHost(env.YTMD_HOST || undefined), token, timeoutMs, dryRun, secret,
     connectionMode, websocketUrl: websocketUrl(env.TIKFINITY_WS_URL || undefined),
     requestsEnabled: booleanSetting(env, 'REQUESTS_ENABLED', connectionMode === 'advanced'),
-    clientId: (env.YTMD_CLIENT_ID || 'ytmd-stream-bot').trim(),
+    clientId,
     port: numberSetting(env, 'TIKFINITY_PORT', 7280, 65535), commands,
     cooldownSeconds: numberSetting(env, 'COOLDOWN_SECONDS', 60),
     maxSongSeconds: numberSetting(env, 'MAX_SONG_SECONDS', 420, 604800),

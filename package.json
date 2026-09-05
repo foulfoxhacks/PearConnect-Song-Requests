@@ -1,7 +1,7 @@
 {
   "name": "pearconnect-song-requests",
-  "version": "0.2.0",
-  "description": "Local song requests for Pear Desktop. TikTok via TikFinity and Streamer.bot; direct Twitch and YouTube Live adapters.",
+  "version": "0.3.0-beta.1",
+  "description": "Shared song-request engine for Pear Desktop with Simple TikFinity, Advanced Streamer.bot, desktop and CLI interfaces.",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
@@ -15,7 +15,10 @@
     "test:smoke": "node scripts/smoke.mjs",
     "build:streamerbot": "node scripts/build-streamerbot.mjs",
     "check:streamerbot": "node scripts/build-streamerbot.mjs --check",
-    "test:streamerbot": "node scripts/test-streamerbot.mjs"
+    "test:streamerbot": "node scripts/test-streamerbot.mjs",
+    "desktop": "node scripts/desktop.mjs",
+    "test:desktop": "node scripts/test-desktop.mjs",
+    "package:win": "node scripts/package-desktop.mjs"
   },
   "keywords": [
     "youtube-music",
@@ -53,5 +56,9 @@
     "qs": "6.16.0",
     "body-parser": "1.20.6"
   },
-  "private": true
+  "private": true,
+  "devDependencies": {
+    "@electron/packager": "20.3.0",
+    "electron": "44.2.0"
+  }
 }
