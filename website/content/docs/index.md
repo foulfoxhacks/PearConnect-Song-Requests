@@ -17,7 +17,7 @@ The current desktop release is **0.3.0-beta.1**. Automated checks and Windows pa
 
 ## Pick your connection
 
-| | Simple | Advanced |
+| Feature | Simple | Advanced |
 | --- | --- | --- |
 | TikTok input | TikFinity's local event WebSocket | Streamer.bot sends authenticated requests |
 | Best fit | Getting started with fewer setup steps | Existing actions and custom automation |
