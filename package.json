@@ -1,13 +1,21 @@
 {
-  "name": "ytmd-stream-integration",
-  "version": "0.1.0",
-  "description": "Chat-driven song requests for Pear Desktop / YouTube Music Desktop App. Bridges Twitch, TikTok (via TikFinity), and YouTube Live chat into the YTMD queue.",
+  "name": "pearconnect-song-requests",
+  "version": "0.2.0",
+  "description": "Local song requests for Pear Desktop. TikTok via TikFinity and Streamer.bot; direct Twitch and YouTube Live adapters.",
   "main": "src/index.js",
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
+    "start:dry-run": "node src/index.js --dry-run",
     "auth": "node src/auth.js",
-    "test": "node test-smoke.mjs"
+    "setup": "node scripts/setup.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "check": "node scripts/check.mjs",
+    "test": "node scripts/test.mjs",
+    "test:smoke": "node test-smoke.mjs",
+    "build:streamerbot": "node scripts/build-streamerbot.mjs",
+    "check:streamerbot": "node scripts/build-streamerbot.mjs --check",
+    "test:streamerbot": "node scripts/test-streamerbot.mjs"
   },
   "keywords": [
     "youtube-music",
@@ -24,20 +32,25 @@
   "author": "Aleksandr \"Sammy\" Freyermuth (foulfoxhacks)",
   "repository": {
     "type": "git",
-    "url": "https://github.com/foulfoxhacks/ytmd-stream-integration.git"
+    "url": "https://github.com/foulfoxhacks/PearConnect-Song-Requests.git"
   },
   "bugs": {
-    "url": "https://github.com/foulfoxhacks/ytmd-stream-integration/issues"
+    "url": "https://github.com/foulfoxhacks/PearConnect-Song-Requests/issues"
   },
-  "homepage": "https://github.com/foulfoxhacks/ytmd-stream-integration#readme",
+  "homepage": "https://github.com/foulfoxhacks/PearConnect-Song-Requests#readme",
   "license": "MIT",
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "tmi.js": "^1.8.5",
     "youtube-chat": "^2.2.0"
-  }
+  },
+  "overrides": {
+    "qs": "6.16.0",
+    "body-parser": "1.20.6"
+  },
+  "private": true
 }

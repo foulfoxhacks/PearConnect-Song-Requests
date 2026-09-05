@@ -29,18 +29,19 @@ export function startTwitch({ channel, username, oauth, commands, queue, skipAll
     const [rawCmd, ...rest] = text.slice(1).split(/\s+/);
     const cmd = rawCmd.toLowerCase();
     const args = rest.join(' ');
-    const user = tags['display-name'] || tags.username || 'viewer';
+    const user = tags.username || tags['display-name'] || 'viewer';
+    const userId = tags['user-id'] || '';
 
     const reply = (msg) => client.say(chan, msg).catch((e) => log.error('[twitch.say]', e.message));
 
     if (cmd === commands.request) {
-      await queue.handleRequest({ user, query: args, platform: 'twitch', reply });
+      await queue.handleRequest({ user, userId, query: args, platform: 'twitch', reply });
     } else if (cmd === commands.nowPlaying) {
       await queue.handleNowPlaying({ user, reply });
     } else if (cmd === commands.queue) {
       await queue.handleQueuePeek({ user, reply });
     } else if (cmd === commands.skip) {
-      await queue.handleSkip({ user, reply, allowlist: skipAllowlist });
+      await queue.handleSkip({ user, userId, platform: 'twitch', reply, allowlist: skipAllowlist });
     }
   });
 

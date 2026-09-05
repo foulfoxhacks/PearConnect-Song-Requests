@@ -6,35 +6,48 @@ on:
 permissions:
   contents: read
 jobs:
-  baseline:
-    runs-on: ubuntu-latest
+  node:
+    name: Node ${{ matrix.node }} / ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        node: ['22', '24']
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run check
+      - run: npm test
+      - run: npm run check:streamerbot
+  streamerbot:
+    name: Streamer.bot C# contract / Windows
+    runs-on: windows-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm pkg set overrides.qs=6.16.0 overrides.body-parser=1.20.6
-      - run: npm install --ignore-scripts
-      - run: npm test
-      - run: npm audit --json > audit.json
-      - name: Export repaired dependency snapshot
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          from zipfile import ZipFile, ZIP_DEFLATED
-          with ZipFile('dependencies.zip', 'w', ZIP_DEFLATED) as archive:
-              for path in Path('node_modules').rglob('*'):
-                  if path.is_file():
-                      archive.write(path, str(path))
-          PY
-      - uses: actions/upload-artifact@v4
+          cache: npm
+      - uses: actions/setup-dotnet@v4
         with:
-          name: pearconnect-dependencies
-          path: |
-            package.json
-            package-lock.json
-            dependencies.zip
-            audit.json
-          retention-days: 3
-          if-no-files-found: error
+          dotnet-version: '8.0.x'
+      - run: npm ci --ignore-scripts
+      - run: npm run test:streamerbot
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --ignore-scripts
+      - run: npm audit --audit-level=moderate
