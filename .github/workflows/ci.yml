@@ -14,9 +14,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: npm
-      - run: npm ci --ignore-scripts
-      - run: npm audit fix --ignore-scripts
+      - run: npm pkg set overrides.qs=6.16.0
+      - run: npm install --ignore-scripts
       - run: npm test
       - run: npm audit --json > audit.json
       - name: Export repaired dependency snapshot
@@ -33,6 +32,7 @@ jobs:
         with:
           name: pearconnect-dependencies
           path: |
+            package.json
             package-lock.json
             dependencies.zip
             audit.json
