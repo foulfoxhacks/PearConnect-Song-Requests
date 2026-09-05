@@ -53,6 +53,18 @@ The activity message gives more context. A rejection is not necessarily a connec
 
 PearConnect does not automatically retry player writes. Re-submitting a command or re-running a Streamer.bot action can create a new request.
 
+## Accepted command, but no song in the queue
+
+From beta.4, **Enqueue confirmed** requires a new occurrence of the selected video ID in a before/after queue check. The result includes its observed position. New requests go to the end of the existing queue; scroll down in the player's **Up next** list or open **PearConnect → Requests & queue**, which refreshes while visible. Positions are snapshots and can change with playback or manual edits.
+
+**Outcome uncertain** can also mean the API accepted a command without changing the queue. This was reproduced with YouTube Music Desktop 3.11.0. A player connection indicator or HTTP 204 is not proof of an addition. Update to the [current official player release](https://github.com/pear-devs/pear-desktop/releases/latest), authorize it, then verify one request. A newer player is a compatibility step, not a guaranteed fix. Check the existing queue before submitting again.
+
+## Search finds the song but cannot verify its length
+
+Update PearConnect to beta.4 or later. The player's overview search can show play counts without song lengths; PearConnect now asks the Songs/Videos filters for the same video ID and parses their inline duration. Different recordings cannot supply each other's length. No Spotify, Last.fm or YouTube Data API key is needed for this lookup.
+
+If neither response supplies a duration, the request remains rejected when a duration limit is enabled. A guided test can validate a more specific artist/song query without changing playback. Disabling the duration rule is not necessary to fix the supported response format.
+
 ## Advanced integration fails
 
 - Use Advanced mode in PearConnect.

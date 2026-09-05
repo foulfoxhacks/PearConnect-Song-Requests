@@ -140,7 +140,8 @@ export class StreamSession extends DurableObject<Env> {
       if (operation === 'permit') return { ok: true, permitted: row.deadline > Date.now() && s.enabled && this.view(s).accepting };
       const result = body.result as Json | undefined;
       if (!result || typeof result.ok !== 'boolean' || !clean(result.code, 60) || !clean(result.message, 1200)) return fail('invalid_input', 'Invalid request result.');
-      const safeResult = { ok: result.ok, code: result.code, message: result.message, outcomeUncertain: result.outcomeUncertain === true };
+      const safeResult = { ok: result.ok, code: result.code, message: result.message, outcomeUncertain: result.outcomeUncertain === true,
+        queueVerified: result.code === 'added' && result.ok === true && result.queueVerified === true };
       this.ctx.storage.sql.exec("UPDATE requests SET state='done', result=? WHERE id=?", JSON.stringify(safeResult), row.id);
       return { ok: true };
     }

@@ -57,6 +57,7 @@ try {
   await page.getByRole('button', { name: 'Send song request' }).click();
   await expect(page.getByRole('heading', { name: 'Enqueue confirmed.' })).toBeVisible({ timeout: 15000 });
   assert.equal(f.calls.filter(c => c[0] === 'addToQueue').length, 1);
+
   await page.reload(); await expect(page.getByRole('heading', { name: 'Enqueue confirmed.' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Check request status', exact: true })).toHaveCount(0);
   assert.equal(f.calls.filter(c => c[0] === 'addToQueue').length, 1);
@@ -64,7 +65,23 @@ try {
   await page.getByLabel('Display name').fill('Changed name'); await page.getByLabel('Artist and song', { exact: true }).fill('Another song');
   await page.getByRole('button', { name: 'Send song request' }).click();
   await expect(page.locator('.session-receipt')).toContainText('slow down', { timeout: 15000 });
+  await expect(page.getByRole('heading', { name: 'Request not added.' })).toBeVisible();
   assert.equal(f.calls.filter(c => c[0] === 'addToQueue').length, 1);
+  // A 204 without an observed new queue entry must stay uncertain in the real
+  // relay/browser flow, including after reload and before another submission.
+  engine.queue.lastRequest.clear(); engine.queue.queueCheckDelayMs = 1;
+  const readQueue = f.ytmd.getQueue;
+  f.ytmd.getQueue = async () => ({ items: [] });
+  await page.getByRole('button', { name: 'Request another song', exact: true }).click();
+  await page.getByLabel('Artist and song', { exact: true }).fill('Unconfirmed test song');
+  await page.getByRole('button', { name: 'Send song request' }).click();
+  await expect(page.getByRole('heading', { name: 'Check before retrying.' })).toBeVisible({ timeout: 15000 });
+  await expect(page.getByRole('button', { name: 'Request another song', exact: true })).toBeDisabled();
+  await page.reload();
+  await expect(page.getByRole('heading', { name: 'Check before retrying.' })).toBeVisible();
+  assert.equal(f.calls.filter(c => c[0] === 'addToQueue').length, 2);
+  await page.getByRole('checkbox', { name: 'I checked with the streamer' }).check();
+  f.ytmd.getQueue = readQueue;
   await dashboard.getByRole('button', { name: 'Pause website requests', exact: true }).click();
   await expect.poll(() => engine.requestsEnabled).toBe(false);
   await page.getByRole('button', { name: 'Request another song', exact: true }).click(); await expect(page.getByText('Requests are paused', { exact: true })).toBeVisible();

@@ -55,6 +55,7 @@ test('viewer requests are bounded, isolated and claimed once; result confirms th
   assert.equal((await s.send('permit', { id })).data.permitted, true);
   await s.send('complete', { id, result: { ok: true, code: 'added', message: 'Enqueue confirmed.' } });
   assert.equal((await raw(`${s.code}/result`, { id })).data.code, 'added');
+  assert.equal((await raw(`${s.code}/result`, { id })).data.queueVerified, false, 'legacy Desktop acknowledgements are not upgraded into queue proof');
   assert.equal((await raw(`${s.code}/result`, { id }, { 'CF-Connecting-IP': '198.51.100.2' })).status, 404);
   assert.equal((await s.send('poll', { ready: true, intake: true })).data.request, null);
   assert.doesNotMatch(JSON.stringify((await raw(`${s.code}/public`)).data), new RegExp(s.ownerToken));
@@ -118,7 +119,7 @@ test('native relay client and shared engine enforce cooldowns, permission change
   async function waitFor(check) { for (let i=0;i<100;i++) { const result=await check(); if(result) return result; await new Promise(r=>setTimeout(r,25)); } throw new Error('Timed out waiting for relay'); }
   await waitFor(async () => (await raw(`${s.code}/public`)).data.accepting);
   async function song(name) { const id=randomUUID(); await raw(`${s.code}/submit`,{id,name,query:'Björk “Jóga”'}); return waitFor(async()=>{const r=(await raw(`${s.code}/result`,{id})).data; return r.state==='done' ? r : null;}); }
-  assert.equal((await song('alice')).code, 'added');
+  const accepted = await song('alice'); assert.equal(accepted.code, 'added'); assert.equal(accepted.queueVerified, true);
   assert.equal((await song('different-name')).code, 'cooldown');
   assert.equal(f.calls.filter(c=>c[0]==='addToQueue').length,1);
   assert.doesNotMatch(JSON.stringify(client.snapshot()), /ownerToken.*[a-f0-9]{64}|private-player-token/);

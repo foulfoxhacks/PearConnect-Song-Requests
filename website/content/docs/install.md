@@ -7,7 +7,7 @@ description: Install the portable PearConnect Windows preview and prepare your f
 
 ## Windows desktop preview
 
-[Download PearConnect v0.3.0-beta.3 for Windows x64](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/download/v0.3.0-beta.3/PearConnect-0.3.0-beta.3-win-x64.zip)
+[Download PearConnect v0.3.0-beta.4 for Windows x64](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/download/v0.3.0-beta.4/PearConnect-0.3.0-beta.4-win-x64.zip)
 
 1. Download the ZIP and extract **the complete folder** to a location you can keep.
 2. Open **PearConnect.exe** from the extracted folder.

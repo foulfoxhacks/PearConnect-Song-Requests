@@ -5,6 +5,22 @@ description: Download the current PearConnect desktop preview and understand wha
 
 # Release notes
 
+## 0.3.0-beta.4 · Search metadata & queue verification
+
+**5 September 2026** · Windows x64 · Portable ZIP
+
+[Download the current Windows preview](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/download/v0.3.0-beta.4/PearConnect-0.3.0-beta.4-win-x64.zip) · [Release and checksums](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/tag/v0.3.0-beta.4)
+
+- Duration fallback uses the player's own Songs/Videos search filters and matches the exact video ID. Spotify, Last.fm and a YouTube Data API key are not required.
+- Inline metadata durations and artist names are parsed correctly. Search calls are serialized to avoid mixing concurrent responses from the player's shared channel.
+- Queue additions require a new occurrence of the selected video in the player queue. An HTTP acknowledgement alone results in **Outcome uncertain**. Writes are never automatically retried.
+- Confirmed results include the observed queue position. **Requests & queue** refreshes on entry and every five seconds while visible, showing song durations.
+- Website receipts clearly distinguish rejection, confirmation and uncertainty, including after reload.
+
+The live search resolved **Hear Me Now (feat. DIAMANTE)** by Bad Wolves to the correct recording and **3:40**. One authorized live enqueue test against **YouTube Music Desktop 3.11.0** returned an acknowledgement but left its 68-entry queue unchanged. The new checks correctly reported that as unconfirmed. **Actual playback integration remains unverified on this player; this release does not fix its internal enqueue implementation.** Update the external player and rehearse one request before accepting requests on stream.
+
+Close the old PearConnect app, extract the new ZIP and launch its `PearConnect.exe`. Saved settings remain. Recreate session codes after restarting; updating the website alone does not update Desktop. This is still an unsigned preview.
+
 ## 0.3.0-beta.3 · Visual studio
 
 **5 September 2026** · Windows x64 · Portable ZIP

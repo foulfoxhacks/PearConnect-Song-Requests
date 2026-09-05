@@ -30,7 +30,7 @@ The desktop app saves the returned credential using the operating system's encry
 
 Use **Test player connection** on Overview or **Test player** in Connections. This checks player reachability without changing playback.
 
-An idle player can be connected without reporting a track. **Connected** means the player is reachable; an **Enqueue confirmed** request result means the enqueue operation completed. Neither alone proves audible playback.
+An idle player can be connected without reporting a track. **Connected** means the player is reachable. From beta.4, **Enqueue confirmed** means a before/after queue check observed a new occurrence of the selected video ID. Neither alone proves audible playback. See [accepted command, missing queue entry](./troubleshooting#accepted-command-but-no-song-in-the-queue) if an API call returns successfully but the song does not appear.
 
 ## Connection states
 

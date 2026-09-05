@@ -7,7 +7,7 @@ import sampleCover from './assets/sample-cover.webp';
 
 const menuOpen = ref(false);
 const widgetStyle = ref('cover');
-const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/download/v0.3.0-beta.3/PearConnect-0.3.0-beta.3-win-x64.zip';
+const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/download/v0.3.0-beta.4/PearConnect-0.3.0-beta.4-win-x64.zip';
 </script>
 
 <template>
@@ -43,7 +43,7 @@ const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/rele
             </a>
             <a href="/docs/" class="guide-link">Read the setup guide <span aria-hidden="true">→</span></a>
           </div>
-          <p class="release-caption">Free &amp; open source <span>·</span> v0.3.0-beta.3 preview</p>
+          <p class="release-caption">Free &amp; open source <span>·</span> v0.3.0-beta.4 preview</p>
           <p class="hero-detail">Windows x64. Portable download. No separate runtime to install.</p>
         </div>
         <figure class="hero-product">
@@ -111,7 +111,7 @@ const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/rele
         <div class="download-section section-width">
           <div><p class="kicker">YOUR NEXT STREAM STARTS HERE</p><h2 id="download-title">Bring your chat<br>into the mix.</h2><p>Download PearConnect, extract the complete folder and open the app. Your first request starts with a connection.</p></div>
           <div class="download-options">
-            <div class="download-meta"><span>WINDOWS x64</span><span itemprop="softwareVersion">0.3.0-beta.3</span></div>
+            <div class="download-meta"><span>WINDOWS x64</span><span itemprop="softwareVersion">0.3.0-beta.4</span></div>
             <a class="download-button" :href="download" itemprop="downloadUrl">Download the Windows preview <span aria-hidden="true">↓</span></a>
             <p>Portable ZIP · Free &amp; open source</p>
             <div class="download-links"><a href="/docs/install">Installation guide <span aria-hidden="true">↗</span></a><a href="/docs/cli">CLI setup <span aria-hidden="true">↗</span></a></div>
