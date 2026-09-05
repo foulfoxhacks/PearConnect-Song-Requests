@@ -23,6 +23,10 @@ Added the Electron console with setup, authorization, rules, connections, reques
 
 Local checks: 71 Node tests plus original smoke suite pass; real hidden Electron tests pass for OS-encrypted storage, isolated renderer, approved/invalid IPC operations, form submission and plain-text handling of injected markup. Windows portable build completes. npm audit reports zero known vulnerabilities, including desktop tooling. This does not substitute for fresh-machine/live-stream acceptance; see `docs/DESKTOP.md`.
 
+## Final preview validation
+
+Expanded the audit to 73 Node tests, current nested TikFinity-referenced identity fixtures, actual GUI authorization against a local fake player and refusal of a separate CLI while the desktop engine runs. Corrected the Streamer.bot global label and checked both persisted and in-flight rule behavior. Windows CI now includes the real Electron harness and portable artifact build. See `docs/AUDIT-2026-09-05.md` for feedback by commit, validation boundaries and the remaining release acceptance work.
+
 ## Integration hardening pass
 
 Baseline: `0a82358bcae8011f23050191aaa41d88fc267ec3`.

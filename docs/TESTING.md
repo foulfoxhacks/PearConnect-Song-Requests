@@ -24,6 +24,24 @@ The C# test compiles all five generated variants and sends actual POSTs through 
 
 The CI workflow runs the Node checks on Windows and Linux under Node 22 and 24, plus the C# bridge checks on Windows. No live account credentials are required or supplied. A checked-in .sb file must reproduce from source or the checks fail.
 
+## Desktop and Simple preview checks
+
+The preview adds tests for engine lifecycle, atomic mode switching, same-engine rules and permissions, global processing capacity, command parsing, instance exclusion, encrypted-settings handling and sanitized diagnostics. A real loopback WebSocket exercises malformed events, Unicode, string identities, duplicate IDs and reconnect behavior. Its fixture is synthetic and matches the documented event envelope; it is not a recording from a real TikTok stream.
+
+On Windows, run:
+
+```sh
+node node_modules/electron/install.js
+npm run test:desktop
+npm run package:win
+```
+
+The hidden real Electron harness verifies renderer sandbox/context isolation, absence of Node/raw IPC, sender checks, invalid privileged operations, actual OS-encrypted persistence, rules form submission, request validation, all-page layout overflow and safe rendering of injected markup. It also authorizes through real local HTTP against a fake player without leaking the returned token to the renderer, tests pause/resume without playback writes, and starts a separate CLI to verify cross-interface instance exclusion. The Windows CI job runs this harness and publishes a portable preview artifact only after packaging and archive checks succeed.
+
+Local source checks at the final preview audit: 73 Node tests, original 12 smoke assertions, 17 C# bridge assertions plus payload/mutation-count checks, the Electron harness, Windows packaging and zero known npm audit vulnerabilities. Final CI results are reported separately from these local checks.
+
+The [desktop acceptance checklist](DESKTOP.md#release-acceptance-still-required) adds fresh-machine onboarding, live event capture, authorization against the real player and streaming-workload measurements. Preview success does not mark those checks complete.
+
 ## Live acceptance checklist
 
 Record application versions and sanitized outcomes. Do not capture tokens, complete .env content, or personal persisted globals in screenshots.

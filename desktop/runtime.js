@@ -76,7 +76,11 @@ export async function launchDesktop({ dataDir = app.getPath('userData'), show = 
       while (stack.length && ++visited < 50000 && tracks.length < 200) { const item = stack.pop(); visit(item); if (item && typeof item === 'object') stack.push(...Object.values(item).reverse().filter(x => x && typeof x === 'object')); }
       return { tracks, message: tracks.length ? 'Pear Desktop queue snapshot. Ownership is not inferred.' : 'No recognized queue rows returned by Pear Desktop.' };
     },
-    copyEndpoint: () => { clipboard.writeText(`http://127.0.0.1:${controller.engine.config.port}/tikfinity`); return { message: 'Endpoint copied.' }; },
+    copyEndpoint: () => {
+      const origin = `http://127.0.0.1:${controller.engine.config.port}`;
+      clipboard.writeText(`${origin}/tikfinity`);
+      return { message: `Endpoint copied. Streamer.bot’s PearConnect.Url uses only ${origin}, without /tikfinity.` };
+    },
     revealSecret: async () => {
       const choice = await dialog.showMessageBox(window, { type: 'info', title: 'Webhook secret', message: controller.engine.config.secret || 'No secret configured', detail: 'Keep this value private. Configure it in Streamer.bot’s PearConnect.Secret global.', buttons: ['Close', 'Copy secret'], defaultId: 0, cancelId: 0, noLink: true });
       if (choice.response === 1) clipboard.writeText(controller.engine.config.secret);

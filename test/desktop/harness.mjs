@@ -2,11 +2,16 @@ import electron from 'electron';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { writeFile } from 'node:fs/promises';
+import http from 'node:http';
+import { once } from 'node:events';
+import { spawn } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 import { launchDesktop, trustedSender } from '../../desktop/runtime.js';
 const { app, safeStorage } = electron;
 const dataDir = process.argv[2];
 app.setPath('userData', dataDir);
 let runtime;
+let playerServer;
 app.whenReady().then(async () => {
 try {
   assert.equal(safeStorage.isEncryptionAvailable(), true, 'OS credential storage must be available for desktop acceptance');
@@ -40,9 +45,37 @@ try {
   assert.equal(await evaluate('typeof window.compromised'), 'undefined');
   assert.equal(await evaluate('document.querySelectorAll(".activity-list img,.activity-list script").length'), 0);
   assert.equal(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'), true);
+  const pageErrors = [];
+  window.webContents.on('console-message', (_event, level, message) => { if (level === 3) pageErrors.push(message); });
+  // The engine lock applies to a separate CLI process, even without a webhook listener.
+  const cli = spawn(process.execPath, [fileURLToPath(new URL('../../src/index.js', import.meta.url)), '--dry-run'], { windowsHide: true,
+    env: { ...process.env, ELECTRON_RUN_AS_NODE: '1', CONNECTION_MODE: 'advanced', TIKFINITY_PORT: '0', TWITCH_CHANNEL: '', YOUTUBE_CHANNEL_ID: '' } });
+  let cliOutput = ''; cli.stdout.on('data', chunk => { cliOutput += chunk; }); cli.stderr.on('data', chunk => { cliOutput += chunk; });
+  const [cliCode] = await once(cli, 'exit'); assert.equal(cliCode, 1); assert.match(cliOutput, /already running/);
+  // Real authorization HTTP exchange, with a fake player and actual OS-encrypted persistence.
+  let authCalls = 0, writes = 0;
+  playerServer = http.createServer((request, response) => {
+    response.setHeader('Content-Type', 'application/json');
+    if (request.url.startsWith('/auth/')) { authCalls++; assert.equal(request.method, 'POST'); response.end(JSON.stringify({ accessToken: 'fresh-private-credential' })); }
+    else { if (request.method !== 'GET') writes++; response.end(JSON.stringify({ title: 'Connected test player', artist: 'Local fixture' })); }
+  });
+  playerServer.listen(0, '127.0.0.1'); await once(playerServer, 'listening');
+  await controller.importEnv({ CONNECTION_MODE: 'advanced', TIKFINITY_PORT: '0', YTMD_HOST: `http://127.0.0.1:${playerServer.address().port}`, REQUEST_ALLOWLIST: 'tiktok:alice' });
+  const authorized = await evaluate('window.pearconnect.authorize()');
+  assert.equal(authorized.ok, true); assert.equal(authorized.value.status.player, 'ready'); assert.equal(authCalls, 1); assert.equal(writes, 0);
+  assert.doesNotMatch(JSON.stringify(authorized), /fresh-private-credential/);
+  assert.equal((await store.read()).YTMD_TOKEN, 'fresh-private-credential');
+  assert.equal((await evaluate('window.pearconnect.resume()')).value.status.requestsEnabled, true);
+  assert.equal((await evaluate('window.pearconnect.pause()')).value.status.requestsEnabled, false); assert.equal(writes, 0);
+  assert.equal((await evaluate('window.pearconnect.connections({ YTMD_HOST: "http://evil.invalid" })')).ok, false);
+  for (const page of ['setup', 'rules', 'connections', 'requests', 'activity', 'dashboard']) {
+    await evaluate(`document.querySelector('[data-view="${page}"]').click()`);
+    assert.equal(await evaluate('document.documentElement.scrollWidth <= window.innerWidth'), true);
+  }
+  assert.deepEqual(pageErrors, []);
   const screen = await window.webContents.capturePage(); await writeFile(join(dataDir, 'dashboard.png'), screen.toPNG());
-  console.log('PASS: real Electron sandbox, IPC boundary, encrypted settings, shared rules, safe preview, forms and rendering.');
+  console.log('PASS: real Electron sandbox, IPC boundary, encrypted authorization, GUI/CLI exclusion, shared rules, safe preview, forms and rendering.');
   console.log(`Screenshot: ${join(dataDir, 'dashboard.png')}`);
-  await controller.engine.stop(); window.destroy(); app.quit();
-} catch (error) { console.error(error); await runtime?.controller.engine.stop(); runtime?.window.destroy(); app.exit(1); }
+  await controller.engine.stop(); playerServer.closeAllConnections(); await new Promise(resolve => playerServer.close(resolve)); window.destroy(); app.quit();
+} catch (error) { console.error(error); playerServer?.closeAllConnections(); playerServer?.close(); await runtime?.controller.engine.stop(); runtime?.window.destroy(); app.exit(1); }
 });

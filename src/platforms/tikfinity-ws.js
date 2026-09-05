@@ -3,6 +3,13 @@ import { websocketUrl } from '../config.js';
 import { parseCommand, dispatchChat } from '../commands.js';
 import { text, validatePayload } from '../validation.js';
 
+function consistentField(name, values) {
+  const supplied = values.filter(value => value !== undefined && value !== '');
+  for (const value of supplied) text(value, name, { max: 100 });
+  if (new Set(supplied).size > 1) throw new Error('Conflicting event identities.');
+  return supplied[0];
+}
+
 export function parseTikfinityEvent(raw) {
   if (typeof raw !== 'string' || Buffer.byteLength(raw) > 65536) throw new Error('Invalid event size.');
   const event = JSON.parse(raw);
@@ -10,10 +17,15 @@ export function parseTikfinityEvent(raw) {
   if (event.event !== 'chat') return { type: 'other' };
   const data = event.data;
   if (!data || typeof data !== 'object' || Array.isArray(data)) throw new Error('Missing chat data.');
-  // uniqueId is the TikTok handle, never nickname/display name. Keep 64-bit IDs as strings.
-  const identity = validatePayload({ user: data.uniqueId, userId: data.userId, query: '' });
+  // TikFinity references a connector that now also publishes nested user/common fields.
+  // Support legacy flat and current nested representations, never nickname/display name.
+  // The current proto uses idStr/displayId; some connector versions expose userId/uniqueId.
+  if (data.user !== undefined && (!data.user || typeof data.user !== 'object' || Array.isArray(data.user))) throw new Error('Invalid nested identity.');
+  const handle = consistentField('user', [data.uniqueId, data.user?.uniqueId, data.user?.displayId]);
+  const userId = consistentField('userId', [data.userId, data.user?.userId, data.user?.idStr]);
+  const identity = validatePayload({ user: handle, userId, query: '' });
   const message = text(data.comment, 'comment', { max: 1024 });
-  const id = text(data.msgId, 'msgId', { max: 100, optional: true });
+  const id = text(consistentField('msgId', [data.msgId, data.common?.msgId]), 'msgId', { max: 100, optional: true });
   return { type: 'chat', ...identity, message, id };
 }
 

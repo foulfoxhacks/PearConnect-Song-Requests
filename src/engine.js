@@ -66,14 +66,20 @@ export class PearConnectEngine extends EventEmitter {
       this.releaseLock = await this.lock();
       await this.testPlayer();
       if (strictPlayer && !['ready', 'dry_run'].includes(this.playerState)) throw new Error('Pear Desktop is unavailable or unauthorized.');
+      if (this.config.port && !this.config.secret) this.log.warn('[security] No webhook secret is configured. Local processes can call this bridge; configure TIKFINITY_SECRET for normal use.');
       this.server = await this.startWebhook({ ...this.config, log: this.log, queue: this.adapter('advanced'), getStatus: () => this.status(), getDiagnostics: () => this.diagnostics() });
       this.lifecycle = 'running';
       await this.connectInput();
       if (!this.config.dryRun && this.connectPlatforms) {
-        const [{ startTwitch }, { startYouTube }] = await Promise.all([import('./platforms/twitch.js'), import('./platforms/youtube.js')]);
         const shared = { commands: this.config.commands, skipAllowlist: this.config.skipAllowlist, log: this.log };
-        this.twitch = startTwitch({ ...shared, ...this.config.twitch, queue: this.adapter('twitch') });
-        this.youtube = startYouTube({ ...shared, channelId: this.config.channelId, queue: this.adapter('youtube') });
+        if (this.config.twitch.channel) {
+          const { startTwitch } = await import('./platforms/twitch.js');
+          this.twitch = startTwitch({ ...shared, ...this.config.twitch, queue: this.adapter('twitch') });
+        }
+        if (this.config.channelId) {
+          const { startYouTube } = await import('./platforms/youtube.js');
+          this.youtube = startYouTube({ ...shared, channelId: this.config.channelId, queue: this.adapter('youtube') });
+        }
       }
       this.changed();
     } catch (error) { await this.stop(); throw error; }

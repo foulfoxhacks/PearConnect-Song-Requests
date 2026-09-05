@@ -2,6 +2,10 @@
 
 The intended route is **TikTok LIVE -> TikFinity -> Streamer.bot -> PearConnect -> Pear Desktop**. Streamer.bot owns the POST request. Do not hunt for JSON-body settings in TikFinity.
 
+This is **Advanced mode**. Select Advanced in the desktop, or set `CONNECTION_MODE=advanced` in the CLI’s `.env`. New setup files start paused: enable requests deliberately after testing (`REQUESTS_ENABLED=true` or CLI `--accept-requests`). Existing v0.2 configurations without these fields remain Advanced and enabled. Simple mode uses TikFinity’s event socket instead and rejects Advanced command input to prevent duplicate queues.
+
+Desktop users can export the action package and reveal/copy the webhook secret from Connections. In CLI installations, read the secret from `.env`. The full copied `/tikfinity` endpoint is for request clients; the Streamer.bot `PearConnect.Url` global below takes only the origin, with no path.
+
 ## 1. Import the actions
 
 Back up your Streamer.bot configuration first. Open **Import**, then drag `integrations/streamerbot/PearConnect.sb` into the import field, or paste the entire encoded file content. Inspect the preview: it should contain exactly these five actions in group **PearConnect**:
@@ -31,11 +35,11 @@ In Streamer.bot's persisted global variables, create the following settings. The
 | Name | Value |
 | --- | --- |
 | `PearConnect.Url` | `http://127.0.0.1:7280` or your configured bridge port |
-| `PearConnect.Secret` | Exact `TIKFINITY_SECRET` from your private `.env` |
+| `PearConnect.Secret` | Exact secret from desktop Connections or private CLI `TIKFINITY_SECRET` |
 | `PearConnect.RequestCommand` | `sr`, without `!`, or your custom request command |
 | `PearConnect.ChatReplies` | `false` initially; `true` enables optional replies |
 
-Missing URL and request-command settings use the displayed defaults. A missing secret is empty; it only works when the bridge also has no secret. The URL must use literal `127.0.0.1`, HTTP, and no path/query/credentials. This avoids accidentally sending the private header to another host. Do not put the Pear Desktop bearer token here: that belongs only in the bridge's `.env`.
+Missing URL and request-command settings use the displayed defaults. A missing secret is empty; it only works when the bridge also has no secret. The URL must use literal `127.0.0.1`, HTTP, and no path/query/credentials. This avoids accidentally sending the private header to another host. Do not put the Pear Desktop bearer token here: that belongs only in the CLI’s `.env` or encrypted desktop storage.
 
 The two local secrets are different: `YTMD_TOKEN` authenticates PearConnect to Pear Desktop; `TIKFINITY_SECRET` authenticates Streamer.bot to PearConnect. Neither is your Streamer.bot WebSocket password.
 

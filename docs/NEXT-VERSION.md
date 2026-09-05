@@ -32,7 +32,7 @@ Activity is bounded to 200 command results in memory. Enqueue confirmation is di
 
 Baseline `0bb62c7`: original 12 smoke assertions and 56 Node tests passed locally, with zero known npm audit vulnerabilities. Added tests exercise lifecycle repair, pause/switch during in-flight work, rule changes without counter resets, permissions, processing capacity, singleton exclusion and a real loopback WebSocket with reconnect/repeated/malformed events.
 
-`test/fixtures/tikfinity-chat.json` is a **synthetic fixture matching the documented envelope**, not a recording from a real livestream. Real TikFinity event capture and fresh-machine player/chat acceptance remain required before declaring Simple production-ready. No live chat or audible playback has been tested in this audit.
+The files `test/fixtures/tikfinity-chat*.json` are **synthetic fixtures matching the documented envelope**, not recordings from a real livestream. Both legacy flat identity fields and current nested `user`/`common` payloads are covered, including rejection of conflicting IDs. Real TikFinity event capture and fresh-machine player/chat acceptance remain required before declaring Simple production-ready. No live chat or audible playback has been tested in this audit.
 
 ## Upstream references checked 2026-09-05
 

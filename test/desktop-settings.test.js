@@ -48,3 +48,14 @@ test('rule persistence failure restores previous effective rules', async t => {
   await assert.rejects(controller.saveRules({ MAX_SONG_SECONDS: '42' }), /disk full/);
   assert.equal(controller.engine.config.maxSongSeconds, 420);
 });
+
+test('permissions remain unchanged while a rule save is pending', async t => {
+  const f = fixture(); let persist;
+  const controller = new DesktopController({ read: async () => ({ DRY_RUN: 'true', TIKFINITY_PORT: '0', REQUEST_ALLOWLIST: 'tiktok:alice' }), encryptionAvailable: () => true, write: () => new Promise(resolve => { persist = resolve; }) },
+    { engineOptions: { player: f.ytmd, logger: log, lock: async () => async () => {}, connectPlatforms: false } });
+  await controller.init(); t.after(() => controller.engine.stop());
+  const changing = controller.saveRules({ REQUEST_ALLOWLIST: '' });
+  assert.equal((await controller.engine.validateRequest({ user: 'bob', query: 'song' })).code, 'forbidden');
+  persist(); await changing;
+  assert.equal((await controller.engine.validateRequest({ user: 'bob', query: 'song' })).code, 'dry_run');
+});

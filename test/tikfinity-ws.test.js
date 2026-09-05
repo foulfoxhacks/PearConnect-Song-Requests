@@ -8,6 +8,7 @@ import { startTikfinitySocket, parseTikfinityEvent } from '../src/platforms/tikf
 import { loadConfig } from '../src/config.js';
 import { fixture, log } from './helpers.js';
 const recorded = await readFile(new URL('./fixtures/tikfinity-chat.json', import.meta.url), 'utf8');
+const nested = await readFile(new URL('./fixtures/tikfinity-chat-nested.json', import.meta.url), 'utf8');
 async function until(fn) { for (let i = 0; i < 150; i++) { if (fn()) return; await delay(10); } throw new Error('Condition not observed.'); }
 
 test('documented envelope fixture preserves exact IDs and Unicode; malformed identities fail closed', () => {
@@ -18,6 +19,14 @@ test('documented envelope fixture preserves exact IDs and Unicode; malformed ide
   for (const patch of [{ uniqueId: '' }, { uniqueId: {} }, { userId: 1234567890123456789 }, { comment: 'x'.repeat(1025) }, { comment: '!sr x\u0000' }]) {
     const value = JSON.parse(recorded); Object.assign(value.data, patch); assert.throws(() => parseTikfinityEvent(JSON.stringify(value)));
   }
+});
+
+test('nested current connector fields normalize identically; conflicting identities are rejected', () => {
+  assert.deepEqual(parseTikfinityEvent(nested), parseTikfinityEvent(recorded));
+  const value = JSON.parse(nested); value.data.userId = 'different-id';
+  assert.throws(() => parseTikfinityEvent(JSON.stringify(value)), /Conflicting/);
+  delete value.data.userId; value.data.user.idStr = 123;
+  assert.throws(() => parseTikfinityEvent(JSON.stringify(value)), /string/);
 });
 
 test('real local WebSocket tracks socket/chat/commands, deduplicates across reconnect, and stops cleanly', async t => {
@@ -36,7 +45,7 @@ test('real local WebSocket tracks socket/chat/commands, deduplicates across reco
   await until(() => received.length === 1); assert.ok(input.status().lastCommandAt);
   assert.equal(received[0].query, 'Björk  "Jóga" 🦊'); assert.equal(calls.length, 0);
   connections[0].terminate(); await until(() => connections.length === 2);
-  connections[1].send(recorded); const next = JSON.parse(recorded); next.data.msgId = 'another-id'; connections[1].send(JSON.stringify(next));
+  connections[1].send(nested); const next = JSON.parse(recorded); next.data.msgId = 'another-id'; connections[1].send(JSON.stringify(next));
   await until(() => received.length === 2); input.stop(); await delay(50); assert.equal(connections.length, 2);
 });
 
