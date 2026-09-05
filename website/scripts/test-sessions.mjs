@@ -58,6 +58,7 @@ try {
   await expect(page.getByRole('heading', { name: 'Enqueue confirmed.' })).toBeVisible({ timeout: 15000 });
   assert.equal(f.calls.filter(c => c[0] === 'addToQueue').length, 1);
   await page.reload(); await expect(page.getByRole('heading', { name: 'Enqueue confirmed.' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Check request status', exact: true })).toHaveCount(0);
   assert.equal(f.calls.filter(c => c[0] === 'addToQueue').length, 1);
   await page.getByRole('button', { name: 'Request another song', exact: true }).click();
   await page.getByLabel('Display name').fill('Changed name'); await page.getByLabel('Artist and song', { exact: true }).fill('Another song');
