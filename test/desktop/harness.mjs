@@ -78,9 +78,9 @@ try {
     if (request.url.startsWith('/auth/')) { authCalls++; assert.equal(request.method, 'POST'); response.end(JSON.stringify({ accessToken: 'fresh-private-credential' })); }
     else if (request.url === '/api/v1/queue') {
       queueReads++; assert.equal(request.method, 'GET');
-      response.end(JSON.stringify({ contents: [
-        { playlistPanelVideoRenderer: { title: { simpleText: 'Jóga' }, shortBylineText: { runs: [{ text: 'Björk' }] }, selected: true } },
-        { playlistPanelVideoRenderer: { title: { simpleText: 'A song for the stream' }, shortBylineText: { runs: [{ text: 'Local fixture' }] } } }
+      response.end(JSON.stringify({ items: [
+        { playlistPanelVideoRenderer: { videoId: 'joga', title: { simpleText: 'Jóga' }, shortBylineText: { runs: [{ text: 'Björk' }] }, lengthText: { simpleText: '5:05' }, selected: true } },
+        { playlistPanelVideoRenderer: { videoId: 'fixture-song', title: { simpleText: 'A song for the stream' }, shortBylineText: { runs: [{ text: 'Local fixture' }] } } }
       ] }));
     }
     else { if (request.method !== 'GET') writes++; response.end(JSON.stringify({ title: 'Night Drive', artist: 'PearConnect Sessions', album: 'After hours · Sample track', songDuration: 246, elapsedSeconds: 83, isPaused: false, imageSrc: 'https://i.ytimg.com/vi/abcdefghijk/hqdefault.jpg' })); }
@@ -141,7 +141,7 @@ try {
   assert.equal(await evaluate('document.querySelector("[name=COOLDOWN_SECONDS]").value'), '27');
   assert.equal(await evaluate('document.querySelectorAll("[data-mode=advanced][aria-pressed=true]").length'), 2);
   await evaluate('document.querySelector("[data-view=requests]").click(); call("playerQueue")');
-  assert.equal(queueReads, 1); assert.equal(writes, 0);
+  assert.ok(queueReads >= 1); assert.equal(writes, 0);
   assert.equal(await evaluate('document.querySelectorAll("#player-queue .queue-row").length'), 2);
   assert.match(await evaluate('document.querySelector("#player-queue").textContent'), /Jóga.*Björk.*CURRENT/);
   // Synthetic display fixtures cover each result style; these do not perform player writes.

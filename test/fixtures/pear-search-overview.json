@@ -1,0 +1,324 @@
+{
+  "filters": [
+    {
+      "searchEndpoint": {
+        "params": "EgWKAQIQAWoQEAQQAxAFEAoQEBAJEBEQFQ%3D%3D"
+      }
+    },
+    {
+      "searchEndpoint": {
+        "params": "EgWKAQIIAWoQEAQQAxAFEAoQEBAJEBEQFQ%3D%3D"
+      }
+    }
+  ],
+  "contents": [
+    {
+      "musicResponsiveListItemRenderer": {
+        "playlistItemData": {
+          "videoId": "PLXzNgd-Wgw"
+        },
+        "flexColumns": [
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Hear Me Now (feat. DIAMANTE)"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Song"
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "Bad Wolves",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "UCNZgKQ8UFu_-UlJizJEBxkg"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "119M plays"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "musicResponsiveListItemRenderer": {
+        "playlistItemData": {
+          "videoId": "KWNrhK4Zzlw"
+        },
+        "flexColumns": [
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Hear Me Now [Acoustic] (feat. DIAMANTE)"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Song"
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "Bad Wolves",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "UCNZgKQ8UFu_-UlJizJEBxkg"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "634K plays"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "musicResponsiveListItemRenderer": {
+        "playlistItemData": {
+          "videoId": "B5l93prepRs"
+        },
+        "flexColumns": [
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Hear Me Now"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Song"
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "Boyce Avenue",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "UCYYHYtnpz6MuHqpJvAOTgxQ"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "4.3M plays"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "musicResponsiveListItemRenderer": {
+        "playlistItemData": {
+          "videoId": "RYK_8BiGzIo"
+        },
+        "flexColumns": [
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Bad Wolves - Hear me now ft Diamante"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Video"
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "Natabee Pluche",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "UCgqr4lG8zV5wK_gUBwRE0bw"
+                      }
+                    }
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "573 views"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "musicResponsiveListItemRenderer": {
+        "playlistItemData": {
+          "videoId": "7VFS1SGYZDs"
+        },
+        "flexColumns": [
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Bad Wolves feat. DIAMANTE - Hear Me Now [Harley & Joker] || Lyrics \\ مترجم"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Video"
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "BEN",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "UCeg3SMxs4QgwmAF95xtKJuw"
+                      }
+                    }
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "4K views"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "musicResponsiveListItemRenderer": {
+        "playlistItemData": {
+          "videoId": "g2SPU6Csdi4"
+        },
+        "flexColumns": [
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Hear Me Now"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Song"
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "Dimond Saints",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "UCe0FqEatELpOI3q8YRYOFmw"
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "9K plays"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

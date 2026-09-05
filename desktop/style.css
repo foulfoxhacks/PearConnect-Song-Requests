@@ -184,6 +184,8 @@ summary .section-meta { margin-left: auto; }
 .queue-row strong { font-size: 12px; font-weight: 500; }
 .queue-row p { font-size: 10px; margin: 3px 0 0; }
 .queue-current { color: var(--accent); font-size: 9px; margin-left: auto; }
+.queue-duration { color: var(--subtle); margin-left: auto; white-space: nowrap; font-variant-numeric: tabular-nums; font-size: 12px; }
+.queue-duration + .queue-current { margin-left: 0; }
 .empty-queue { font-size: 11px; padding: 20px 0; }
 pre { font: 11px/1.7 Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 420px; overflow: auto; background: #101413; border-left: 2px solid #42503f; padding: 18px; margin-top: 22px; }
 code { font: 11px Consolas, monospace; color: #c2cfbd; }

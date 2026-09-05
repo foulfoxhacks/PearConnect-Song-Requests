@@ -1,0 +1,410 @@
+{
+  "contents": [
+    {
+      "musicResponsiveListItemRenderer": {
+        "playlistItemData": {
+          "videoId": "PLXzNgd-Wgw"
+        },
+        "flexColumns": [
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Hear Me Now (feat. DIAMANTE)"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Bad Wolves",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "UCNZgKQ8UFu_-UlJizJEBxkg"
+                      }
+                    }
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "Disobey",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "MPREb_HuKG1awDF6A"
+                      }
+                    }
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "3:40"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "119M plays"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "musicResponsiveListItemRenderer": {
+        "playlistItemData": {
+          "videoId": "KWNrhK4Zzlw"
+        },
+        "flexColumns": [
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Hear Me Now [Acoustic] (feat. DIAMANTE)"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Bad Wolves",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "UCNZgKQ8UFu_-UlJizJEBxkg"
+                      }
+                    }
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "Hear Me Now [Acoustic]",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "MPREb_4kuHsiQ7fRt"
+                      }
+                    }
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "3:44"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "634K plays"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "musicResponsiveListItemRenderer": {
+        "playlistItemData": {
+          "videoId": "2CrQN_K6Syc"
+        },
+        "flexColumns": [
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Hear Me Now (acoustic)"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Framing Hanley",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "UCn_E8NJOoFqJs8rOD_RxfVA"
+                      }
+                    }
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "The Moment (Digital Deluxe)",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "MPREb_Bu2B8j6oYpW"
+                      }
+                    }
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "3:53"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "394K plays"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "musicResponsiveListItemRenderer": {
+        "playlistItemData": {
+          "videoId": "HNkfAjBjqdI"
+        },
+        "flexColumns": [
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Hear Me Now"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Alok",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "UCyeThGzVYx1MbxUGgIkj3iQ"
+                      }
+                    }
+                  },
+                  {
+                    "text": ", "
+                  },
+                  {
+                    "text": "Zeeba",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "UCk3TisUV7tEaJS0jPRKFVJA"
+                      }
+                    }
+                  },
+                  {
+                    "text": " & "
+                  },
+                  {
+                    "text": "Bruno Martini",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "UCWifrusG8-3gvdYrd0Zx-6A"
+                      }
+                    }
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "Hear Me Now",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "MPREb_uckxSiD0uYP"
+                      }
+                    }
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "3:13"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "1B plays"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "musicResponsiveListItemRenderer": {
+        "playlistItemData": {
+          "videoId": "zCebrY8XVEE"
+        },
+        "flexColumns": [
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "HEAR ME NOW (feat. Amber Kitzman)"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "REDEEMED",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "UCAeIak45xxIYFCAgo_kg7_A"
+                      }
+                    }
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "HEAR ME NOW",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "MPREb_JOaiPPcrVPG"
+                      }
+                    }
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "2:59"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "2.7M plays"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "musicResponsiveListItemRenderer": {
+        "playlistItemData": {
+          "videoId": "PcFTH3tcJ7Y"
+        },
+        "flexColumns": [
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Sober"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "Bad Wolves",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "UCNZgKQ8UFu_-UlJizJEBxkg"
+                      }
+                    }
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "N.A.T.I.O.N.",
+                    "navigationEndpoint": {
+                      "browseEndpoint": {
+                        "browseId": "MPREb_wCGN9Ew7Ks1"
+                      }
+                    }
+                  },
+                  {
+                    "text": " • "
+                  },
+                  {
+                    "text": "3:16"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "musicResponsiveListItemFlexColumnRenderer": {
+              "text": {
+                "runs": [
+                  {
+                    "text": "39M plays"
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

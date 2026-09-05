@@ -18,7 +18,7 @@ On Windows with the .NET SDK and .NET Framework 4.8 targeting pack:
 npm run test:streamerbot
 ```
 
-The original 12-assertion smoke test is preserved byte-for-byte. The added Node suite covers configuration and payload validation; fixed-column duration parsing; bounded upstream calls and redirects; cooldown races; failed-write accounting; scoped skip permissions; real loopback HTTP routing, secrets, malformed bodies and response codes; idempotency; dry-run; process startup; setup preservation; and deterministic native import generation.
+All 12 original smoke assertions are preserved. Beta.4 adds queue readback to its fake player; see [the fixture migration](AUDIT-BETA4.md#smoke-fixture-migration). The added Node suite covers configuration and payload validation; fixed-column duration parsing; bounded upstream calls and redirects; cooldown races; failed-write accounting; scoped skip permissions; real loopback HTTP routing, secrets, malformed bodies and response codes; idempotency; dry-run; process startup; setup preservation; and deterministic native import generation.
 
 The C# test compiles all five generated variants and sends actual POSTs through the Node HTTP bridge. Its player is a test double. Its CPH implementation is a narrow test double for the documented host API. This verifies serialization, command-prefix handling, route selection, authentication, optional chat envelope shape, policy rejections, and preservation of successful requests when chat delivery fails. It is not a real TikFinity, Streamer.bot desktop, Twitch, YouTube, or Pear Desktop session.
 

@@ -4,7 +4,7 @@ The desktop console and CLI use one engine with the same rules, permissions and 
 
 ## Windows portable build
 
-Download the Windows ZIP from the **[PearConnect website](https://pearconnect.mellozone.site/#download)** or the **[0.3.0-beta.3 release](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/tag/v0.3.0-beta.3)**. The release also includes `SHA256SUMS.txt`. Extract the complete folder and open `PearConnect.exe`. Keep its runtime files alongside it. No separate Node.js, npm or Git installation is required to run this build. Builds are currently unsigned; code signing and an installer are separate release work.
+Download the Windows ZIP from the **[PearConnect website](https://pearconnect.mellozone.site/#download)** or the **[0.3.0-beta.4 release](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/tag/v0.3.0-beta.4)**. The release also includes `SHA256SUMS.txt`. Extract the complete folder and open `PearConnect.exe`. Keep its runtime files alongside it. No separate Node.js, npm or Git installation is required to run this build. Builds are currently unsigned; code signing and an installer are separate release work.
 
 For development snapshots, successful GitHub Actions runs also provide the **PearConnect-Windows-x64-preview** artifact.
 

@@ -1,8 +1,10 @@
 # PearConnect Song Requests
 
-Local-first song requests for **Pear Desktop**, with a **desktop console or CLI** and two TikTok connection modes. The `0.3.0-beta.3` preview adds live artwork and playback timing, a customizable OBS widget studio, desktop appearance presets and optional Last.fm discovery. Guided validation and expiring website request codes remain included; live-platform and fresh-machine acceptance remain outstanding.
+Local-first song requests for **Pear Desktop**, with a **desktop console or CLI** and two TikTok connection modes. The `0.3.0-beta.4` preview fixes duration lookup using the player's Songs/Videos filters, verifies queue additions by video ID, and refreshes the visible player queue automatically. Artwork, playback timing, customizable OBS widgets, guided validation and expiring website request codes remain included.
 
-**[Website and Windows download](https://pearconnect.mellozone.site/)** · **[Documentation](https://pearconnect.mellozone.site/docs/)** · [Preview release notes](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/tag/v0.3.0-beta.3)
+**Player compatibility:** a live test with YouTube Music Desktop 3.11.0 reproduced an acknowledged enqueue with no new queue entry. This preview reports that outcome honestly; it does not repair the external player's enqueue implementation. Update the player and verify one request before a stream.
+
+**[Website and Windows download](https://pearconnect.mellozone.site/)** · **[Documentation](https://pearconnect.mellozone.site/docs/)** · [Preview release notes](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/tag/v0.3.0-beta.4)
 
 Start in **Setup guide → Start guided test** to verify the player, a unique live chat command and a read-only song search. If TikTok commands cannot connect, **Session-code fallback** creates a temporary code for [website requests](https://pearconnect.mellozone.site/sessioncode). Expiration is configurable from 15 minutes to 24 hours in Desktop or the [paired web dashboard](https://pearconnect.mellozone.site/web/dashboard). The fallback suspends TikTok command intake and cannot bypass restricted request allowlists. See the [session guide](https://pearconnect.mellozone.site/docs/session-codes) for identity and delivery limits.
 
@@ -296,7 +298,7 @@ On Windows with the .NET SDK and .NET Framework 4.8 targeting pack:
 npm run test:streamerbot
 ```
 
-The original `test-smoke.mjs` remains intact. Additional tests cover real loopback HTTP, mocked Pear Desktop contracts, validation, concurrency, dry-run, import generation, and process startup. The C# test compiles the same source embedded in the import and sends actual POSTs to the Node bridge, using a narrow CPH test double. **It is not a substitute for importing into the real Streamer.bot desktop or testing live TikTok and audible playback.** Follow [the live checklist](docs/TESTING.md).
+The 12 original smoke assertions remain intact; its fake player now also supports queue readback (see [beta.4 audit](docs/AUDIT-BETA4.md)). Additional tests cover real loopback HTTP, mocked Pear Desktop contracts, validation, concurrency, dry-run, import generation, and process startup. The C# test compiles the same source embedded in the import and sends actual POSTs to the Node bridge, using a narrow CPH test double. **It is not a substitute for importing into the real Streamer.bot desktop or testing live TikTok and audible playback.** Follow [the live checklist](docs/TESTING.md).
 
 ```text
 src/                      runtime, configuration, policy, platform adapters

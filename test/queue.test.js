@@ -19,7 +19,7 @@ test('failed writes consume no quota and release the in-flight lock', async () =
   const f = fixture(); f.ytmd.addToQueue = async () => { throw new Error('secret should not appear'); };
   const r = await f.queue.handleRequest(request()); assert.equal(r.code, 'upstream_error'); assert.doesNotMatch(r.message, /secret/);
   assert.equal(f.queue.lastRequest.size, 0); assert.equal(f.queue.pending.size, 0); assert.equal(f.queue.inFlight.size, 0);
-  f.ytmd.addToQueue = async () => null; assert.equal((await f.queue.handleRequest(request())).ok, true);
+  f.ytmd.addToQueue = async id => { f.calls.push(['addToQueue', id]); }; assert.equal((await f.queue.handleRequest(request())).ok, true);
 });
 test('upstream timeout produces a non-retry promise and no false acceptance', async () => {
   const f = fixture(); f.ytmd.addToQueue = async () => { throw Object.assign(new Error(), { code: 'UPSTREAM_TIMEOUT' }); };

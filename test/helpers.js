@@ -7,7 +7,8 @@ export function fixture(options = {}) {
   const calls = [];
   const song = { videoId: 'video123', title: 'Test Song', artist: 'Test Artist', durationSec: 120 };
   const ytmd = Object.fromEntries(['findFirstSong', 'addToQueue', 'getCurrentSong', 'getNextSong', 'next'].map((method) => [method, async (...args) => { calls.push([method, ...args]); return ['findFirstSong', 'getCurrentSong', 'getNextSong'].includes(method) ? song : null; }]));
-  const queue = new QueueManager({ ytmd, logger: log, ...options });
+  ytmd.getQueue = async () => ({ items: calls.filter(call => call[0] === 'addToQueue').map(call => ({ playlistPanelVideoRenderer: { videoId: call[1], title: { simpleText: song.title } } })) });
+  const queue = new QueueManager({ ytmd, logger: log, queueCheckDelayMs: 1, ...options });
   return { queue, ytmd, calls, song };
 }
 export async function serve(t, handler) {

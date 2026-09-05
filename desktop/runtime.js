@@ -8,6 +8,7 @@ import { DesktopController } from './controller.js';
 import { InputError } from '../src/validation.js';
 import { PlaybackStudio } from './studio.js';
 import { lastfmUrl } from '../src/playback.js';
+import { playerQueue } from '../src/player-queue.js';
 
 const { app, BrowserWindow, ipcMain, session, dialog, clipboard, shell, net, protocol, safeStorage, nativeImage } = electron;
 const directory = dirname(fileURLToPath(import.meta.url));
@@ -101,18 +102,9 @@ export async function launchDesktop({ dataDir = app.getPath('userData'), show = 
     playerQueue: async () => {
       if (controller.engine.config.dryRun || !controller.engine.config.token) return { tracks: [], message: 'Connect Pear Desktop to read its queue.' };
       const raw = await controller.engine.player.getQueue();
-      const tracks = [];
-      const visit = value => {
-        if (!value || typeof value !== 'object') return;
-        if (value.playlistPanelVideoRenderer) {
-          const row = value.playlistPanelVideoRenderer;
-          const text = field => typeof field === 'string' ? field : field?.runs?.map(run => typeof run.text === 'string' ? run.text : '').join('') || field?.simpleText || '';
-          tracks.push({ title: text(row.title).slice(0, 512), artist: text(row.shortBylineText).slice(0, 512), selected: row.selected === true });
-        }
-      };
-      const stack = [raw]; let visited = 0;
-      while (stack.length && ++visited < 50000 && tracks.length < 200) { const item = stack.pop(); visit(item); if (item && typeof item === 'object') stack.push(...Object.values(item).reverse().filter(x => x && typeof x === 'object')); }
-      return { tracks, message: tracks.length ? 'Pear Desktop queue snapshot. Ownership is not inferred.' : 'No recognized queue rows returned by Pear Desktop.' };
+      let tracks;
+      try { tracks = playerQueue(raw); } catch { throw new InputError('Pear Desktop returned an unsupported queue format. Update the player and retry.'); }
+      return { tracks, message: tracks.length ? `${tracks.length} tracks reported by Pear Desktop at ${new Date().toLocaleTimeString()}. New requests go to the end. Positions may change; viewer ownership is not inferred.` : 'Pear Desktop reports an empty queue.' };
     },
     copyEndpoint: () => {
       const origin = `http://127.0.0.1:${controller.engine.config.port}`;

@@ -35,7 +35,8 @@ test('pause revokes a searching request, leaves playback alone, and preserves ac
 
 test('mode switch drains an existing write before enabling the other route and requires resume', async t => {
   const { e, ytmd } = await engine(t);
-  let release; const writing = new Promise(resolve => { ytmd.addToQueue = () => { resolve(); return new Promise(r => { release = r; }); }; });
+  const add = ytmd.addToQueue;
+  let release; const writing = new Promise(resolve => { ytmd.addToQueue = id => { resolve(); return new Promise(r => { release = async () => { await add(id); r(); }; }); }; });
   const pending = e.execute('request', data, 'advanced'); await writing;
   const changing = e.setMode('simple');
   assert.equal((await e.execute('request', data, 'simple')).code, 'input_disabled');

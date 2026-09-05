@@ -6,6 +6,7 @@ import { QueueManager } from './src/queue-manager.js';
 
 // --- Fake YTMD server ---
 const calls = { search: 0, queue: 0, song: 0 };
+const queueItems = [];
 const fakeSearchResponse = {
   contents: {
     tabbedSearchResultsRenderer: {
@@ -37,7 +38,11 @@ const server = http.createServer((req, res) => {
       calls.queue++;
       const parsed = JSON.parse(body);
       if (!parsed.videoId) { res.writeHead(400); return res.end(); }
+      queueItems.push({ playlistPanelVideoRenderer: { videoId: parsed.videoId, title: { simpleText: 'Never Gonna Give You Up' } } });
       res.writeHead(204); res.end();
+    } else if (req.url === '/api/v1/queue' && req.method === 'GET') {
+      res.writeHead(200, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ items: queueItems }));
     } else if (req.url === '/api/v1/song' && req.method === 'GET') {
       calls.song++;
       res.writeHead(200, { 'content-type': 'application/json' });

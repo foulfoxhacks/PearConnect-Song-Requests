@@ -2,8 +2,11 @@ const api = window.pearconnect;
 const $ = selector => document.querySelector(selector);
 let snapshot, initialized = false, busy = false, previewReady = false;
 let verificationStep = 1;
+let activeView = 'dashboard', queueRefreshing = false, lastQueueRefresh = 0;
 const labels = { ready: 'Connected', not_configured: 'Authorization needed', disconnected: 'Disconnected', unauthorized: 'Authorization expired', awaiting_authorization: 'Awaiting approval', dry_run: 'Dry run', connecting: 'Connecting…', reconnecting: 'Reconnecting…', connected_waiting_for_chat: 'Connected · waiting', chat_received: 'Chat arriving', webhook_listening: 'Webhook listening', disabled: 'Disabled', enqueue_confirmed: 'Enqueue confirmed', outcome_uncertain: 'Outcome uncertain', requests_paused: 'Requests paused', received: 'Received', checking: 'Checking', searching: 'Searching', enqueuing: 'Enqueuing', completed: 'Completed', rejected: 'Rejected', failed: 'Failed', tiktok: 'TikTok', twitch: 'Twitch', youtube: 'YouTube', simple: 'TikFinity', advanced: 'Streamer.bot' };
 const label = value => labels[value] || String(value || 'unknown').replaceAll('_', ' ');
+labels.waiting_for_queue = 'Waiting for queue';
+labels.verifying_queue = 'Verifying queue';
 const when = value => value ? new Date(value).toLocaleTimeString() : 'never';
 const pages = {
   dashboard: ['YOUR WORKSPACE', 'Stream overview', 'Your music, connections and requests. All in one place.'],
@@ -22,6 +25,8 @@ function notice(message, error = false) {
 }
 function view(name) {
   if (!pages[name]) return;
+  activeView = name;
+  if (name === 'requests') refreshQueue();
   $('#notice').hidden = true;
   document.querySelectorAll('[data-page]').forEach(el => { el.hidden = el.dataset.page !== name; });
   document.querySelectorAll('nav button').forEach(el => {
@@ -74,10 +79,21 @@ function queue(tracks) {
   tracks.forEach((track, index) => {
     const row = element('div', 'queue-row'), copy = element('div');
     copy.append(element('strong', '', track.title), element('p', '', track.artist || 'Artist unavailable'));
-    row.append(element('span', 'queue-index', String(index + 1).padStart(2, '0')), copy);
+    row.append(element('span', 'queue-index', String(track.position || index + 1).padStart(2, '0')), copy);
+    if (track.duration) row.append(element('span', 'queue-duration', track.duration));
     if (track.selected) row.append(element('span', 'queue-current', 'CURRENT'));
     container.append(row);
   });
+}
+async function refreshQueue() {
+  if (queueRefreshing || document.hidden) return;
+  queueRefreshing = true; lastQueueRefresh = Date.now();
+  try {
+    const result = await api.playerQueue();
+    if (result.ok) { $('#queue-note').textContent = result.value.message; queue(result.value.tracks); }
+    else { $('#queue-note').textContent = result.error; queue([]); }
+  } catch { $('#queue-note').textContent = 'Queue could not be refreshed. Check the player connection.'; queue([]); }
+  finally { queueRefreshing = false; }
 }
 function render(value, forms = false) {
   window.PearStudio.render(value.studio, forms);
@@ -196,3 +212,4 @@ for (const [id, operation] of [['rules-form', 'rules'], ['connections-form', 'co
 async function refresh() { if (busy || document.hidden) return; try { const result = await api.snapshot(); if (result.ok) render(result.value); } catch { /* A closing window needs no retry action. */ } }
 call('snapshot');
 setInterval(refresh, 2000);
+setInterval(() => { if (activeView === 'requests' && Date.now() - lastQueueRefresh >= 5000) refreshQueue(); }, 1000);

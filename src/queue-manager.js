@@ -1,10 +1,12 @@
 import { InputError, text } from './validation.js';
 import { isAllowed } from './commands.js';
+import { playerQueue, findQueueAddition } from './player-queue.js';
+import { setTimeout as delay } from 'node:timers/promises';
 
 // Local policy and request accounting. Playback remains owned by Pear Desktop.
 export class QueueManager {
   constructor({ ytmd, cooldownSeconds = 60, maxSongSeconds = 420, maxPerUser = 2,
-    blocklist = [], requestAllowlist = [], logger = console, requestCommand = 'sr', dryRun = false, now = Date.now }) {
+    blocklist = [], requestAllowlist = [], logger = console, requestCommand = 'sr', dryRun = false, now = Date.now, queueCheckDelayMs = 500 }) {
     this.ytmd = ytmd;
     this.cooldown = cooldownSeconds * 1000;
     this.maxSongSeconds = maxSongSeconds;
@@ -18,6 +20,8 @@ export class QueueManager {
     this.lastRequest = new Map();
     this.pending = new Map();
     this.inFlight = new Set();
+    this.writeTail = Promise.resolve();
+    this.queueCheckDelayMs = queueCheckDelayMs;
   }
 
   #reply(reply, ok, code, message, extra = {}) {
@@ -74,6 +78,7 @@ export class QueueManager {
     // Reserve before the first await so concurrent requests cannot race the quota.
     this.inFlight.add(key);
     let writeStarted = false;
+    let releaseWrite;
     try {
       onStage('searching');
       const song = await this.ytmd.findFirstSong(query);
@@ -85,18 +90,42 @@ export class QueueManager {
       if (!song) return this.#reply(reply, false, 'no_results', `@${user} no results for "${query.slice(0, 40)}".`);
       if (this.#blocked(query) || this.#blocked(`${song.title} ${song.artist}`)) return this.#reply(reply, false, 'blocked', `@${user} that request was blocked.`);
       if (this.maxSongSeconds > 0 && (!Number.isFinite(song.durationSec) || song.durationSec <= 0)) {
-        return this.#reply(reply, false, 'unknown_duration', `@${user} the song length could not be verified. Try another result.`);
+        return this.#reply(reply, false, 'unknown_duration', `@${user} no song was added: Pear Desktop did not provide a verified length for “${song.title}”. Try a more specific artist and song name. The streamer's duration limit is still enforced.`);
       }
       if (this.maxSongSeconds > 0 && song.durationSec > this.maxSongSeconds) {
         return this.#reply(reply, false, 'too_long', `@${user} "${song.title}" is too long (max ${formatDur(this.maxSongSeconds)}).`);
       }
       if (preview) return this.#reply(reply, true, 'preview_passed', `Found “${song.title}” by ${song.artist}. Song and duration rules passed. Nothing was queued and no request slot was used.`);
+      // Serialize snapshots and writes across viewers. Two concurrent requests
+      // for the same video must not claim the same observed addition.
+      onStage('waiting_for_queue');
+      const previousWrite = this.writeTail;
+      this.writeTail = new Promise(resolve => { releaseWrite = resolve; });
+      await previousWrite;
+      if (!canMutate()) return this.#reply(reply, false, 'intake_changed', 'Request intake changed. Nothing was queued.');
+      const before = playerQueue(await this.ytmd.getQueue());
       // A remote session may expire or be revoked while the local player is searching.
       if (beforeEnqueue && !await beforeEnqueue()) return this.#reply(reply, false, 'session_changed', 'The session expired, paused or disconnected while searching. Nothing was queued.');
       if (!canMutate()) return this.#reply(reply, false, 'intake_changed', 'Request intake changed. Nothing was queued.');
+      if (this.#blocked(query) || this.#blocked(`${song.title} ${song.artist}`) ||
+          (this.requestAllowlist.length && !isAllowed({ user, userId, platform }, this.requestAllowlist)) ||
+          (this.maxSongSeconds > 0 && (!Number.isFinite(song.durationSec) || song.durationSec <= 0 || song.durationSec > this.maxSongSeconds)) ||
+          (this.maxPerUser > 0 && (this.pending.get(key)?.filter(expiry => expiry > this.now()).length || 0) >= this.maxPerUser)) {
+        return this.#reply(reply, false, 'rules_changed', 'Request rules changed while checking the player. Nothing was queued.');
+      }
       onStage('enqueuing');
       writeStarted = true;
       await this.ytmd.addToQueue(song.videoId);
+      onStage('verifying_queue');
+      let added;
+      // HTTP 204 acknowledges a command dispatched inside Pear Desktop, not a
+      // queue mutation. Poll reads only; never retry a possibly successful write.
+      for (let attempt = 0; attempt < 5; attempt++) {
+        if (attempt) await delay(this.queueCheckDelayMs * attempt);
+        try { added = findQueueAddition(before, playerQueue(await this.ytmd.getQueue()), song.videoId); }
+        catch { break; }
+        if (added) break;
+      }
       const now = this.now();
       if (this.cooldown > 0) this.lastRequest.set(key, now);
       if (this.maxPerUser > 0) {
@@ -107,15 +136,16 @@ export class QueueManager {
         pending.push(now + ttl * 1000);
         this.pending.set(key, pending);
       }
+      if (!added) return this.#reply(reply, false, 'queue_unconfirmed', `@${user} Pear Desktop accepted the command for “${song.title}”, but its queue did not confirm a new entry. Check the end of the player queue before retrying.`, { outcomeUncertain: true });
       this.log.info(`[+queue] ${platform}/${user}: ${song.videoId}`);
       const duration = song.durationSec > 0 ? ` (${formatDur(song.durationSec)})` : '';
-      return this.#reply(reply, true, 'added', `@${user} added: ${song.title} - ${song.artist}${duration}`);
+      return this.#reply(reply, true, 'added', `@${user} added: ${song.title} - ${song.artist}${duration}. Verified at player queue position ${added.position}${added.selected ? ' (current track)' : '; requests are appended to the end, so scroll down in Up next'}.`, { videoId: song.videoId, queuePosition: added.position, queueVerified: true });
     } catch (error) {
       this.log.error('[request] Pear Desktop request failed.');
       const timeout = error.code === 'UPSTREAM_TIMEOUT';
       return this.#reply(reply, false, timeout ? 'upstream_timeout' : 'upstream_error',
         `@${user} ${timeout ? 'the player timed out' : 'the player request failed'}. Check Pear Desktop and its queue before retrying.`, { outcomeUncertain: writeStarted });
-    } finally { this.inFlight.delete(key); }
+    } finally { releaseWrite?.(); this.inFlight.delete(key); }
   }
 
   async #read(user, reply, read, present) {
