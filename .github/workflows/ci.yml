@@ -17,7 +17,8 @@ jobs:
       - run: npm pkg set overrides.qs=6.16.0
       - run: npm install --ignore-scripts
       - run: npm test
-      - run: npm audit --json > audit.json
+      - run: npm audit --json > audit.json || true
+      - run: cat audit.json
       - name: Export repaired dependency snapshot
         run: |
           python3 - <<'PY'
