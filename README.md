@@ -2,6 +2,10 @@
 
 Local-first song requests for **Pear Desktop**, with a **desktop console or CLI** and two TikTok connection modes. The `0.3.0-beta.1` preview adds direct TikFinity events and graphical setup; live-platform and fresh-machine acceptance remain outstanding.
 
+**[Website and Windows download](https://pearconnect.mellozone.site/)** · **[Documentation](https://pearconnect.mellozone.site/docs/)** · [Preview release notes](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/tag/v0.3.0-beta.1)
+
+The public website and searchable documentation live in [`website/`](website/README.md) and deploy to Cloudflare Pages. The song-request engine continues to run locally.
+
 ```text
 TikTok LIVE -> TikFinity local WebSocket (Simple) -------\
 TikTok LIVE -> TikFinity -> Streamer.bot POST (Advanced) -> shared PearConnect engine -> Pear Desktop

@@ -1,0 +1,7 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "pearconnect",
+  "account_id": "61ac4bebbe92f78de54198ee6c9a3b3c",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-09-05"
+}
