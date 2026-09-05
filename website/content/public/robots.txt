@@ -1,4 +1,162 @@
-User-agent: *
+# PearConnect - By FoulFoxHacks - Crawler Policy [Robots.txt]
+# Canonical host: https://pearconnect.mellozone.site/
+# ------------------------------------------------------------------------------------------------------------------
+# Policy:
+# - Allow ordinary search indexing, image/video/news discovery, social previews,
+#   SEO auditing, ad validation, and user-directed AI search/retrieval.
+# - Reserve the site's content from dedicated model-training and bulk-dataset
+#   uses through Content-Signal while keeping the named crawlers crawlable.
+# ------------------------------------------------------------------------------------------------------------------
+# URLs that should not appear in search must remain crawlable and use a page-level
+# meta robots noindex or X-Robots-Tag: noindex response header.
+# ------------------------------------------------------------------------------------------------------------------
+# Conditional statement about what each signal means and defines under policy what is or isnt crawler interpretable.
+# ------------------------------------------------------------------------------------------------------------------
+# As a condition of accessing this website, you agree to abide by the following
+# content signals:
+# (a)  If a Content-Signal = yes, you may collect content for the corresponding
+#      use.
+# (b)  If a Content-Signal = no, you may not collect content for the
+#      corresponding use.
+# (c)  If the website operator does not include a Content-Signal for a
+#      corresponding use, the website operator neither grants nor restricts
+#      permission via Content-Signal with respect to the corresponding use.
+# The content signals and their meanings are:
+# search:   building a search index and providing search results (e.g., returning
+#           hyperlinks and short excerpts from your website's contents). Search does not
+#           include providing AI-generated search summaries.
+# ai-input: inputting content into one or more AI models (e.g., retrieval
+#           augmented generation, grounding, or other real-time taking of content for
+#           generative AI search answers).
+# ai-train: training or fine-tuning AI models.
+# use:      how AI systems may consume the content (immediate, reference, or full).
+#           This is a publisher-defined extension; crawler support is not assumed.
+#
+# ai-input is intentionally omitted from the active Content-Signal. The site
+# neither grants nor restricts that use through Content-Signal; access for named
+# AI-search and user-directed retrieval agents is handled by Allow rules below.
+# ANY RESTRICTIONS EXPRESSED VIA CONTENT SIGNALS ARE EXPRESS RESERVATIONS OF
+# RIGHTS UNDER ARTICLE 4 OF THE EUROPEAN UNION DIRECTIVE 2019/790 ON COPYRIGHT
+# AND RELATED RIGHTS IN THE DIGITAL SINGLE MARKET.
+# ---------------------------------------------------------------------------
+# PRIORITY SEARCH, REGIONAL SEARCH, AND AI-ANSWER DISCOVERY
+# These named groups repeat the Content-Signal because a specific user-agent
+# group does not inherit directives from the wildcard group.
+# ---------------------------------------------------------------------------
+# BEGIN SAMMY MANAGED CONTENT [MODIFIED CONTENT FOR OPTIMIZATION]
+
+User-agent: Googlebot
+User-agent: Googlebot-Image
+User-agent: Googlebot-Video
+User-agent: Googlebot-News
+User-agent: Bingbot
+User-agent: DuckDuckBot
+User-agent: Applebot
+User-agent: Slurp
+User-agent: YandexBot
+User-agent: Baiduspider
+User-agent: PetalBot
+User-agent: Yeti
+User-agent: MojeekBot
+User-agent: SeznamBot
+User-agent: Teoma
+User-agent: Amzn-SearchBot
+User-agent: Amzn-User
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: DuckAssistBot
+User-agent: Gemini-Deep-Research
+Content-Signal: search=yes,ai-train=no,use=reference
 Allow: /
 
+# Brave Search does not expose a distinct robots.txt product token. Keeping
+# Googlebot crawlable keeps the site eligible for Brave's crawler policy.
+# ---------------------------------------------------------------------------
+# SOCIAL AND MESSAGING LINK PREVIEWS
+# ---------------------------------------------------------------------------
+
+User-agent: facebookexternalhit
+User-agent: FacebookBot
+User-agent: Facebot
+User-agent: meta-externalfetcher
+User-agent: meta-webindexer
+User-agent: meta-externalads
+User-agent: Twitterbot
+User-agent: LinkedInBot
+User-agent: Discordbot
+User-agent: Pinterestbot
+User-agent: Slackbot
+User-agent: TelegramBot
+User-agent: WhatsApp
+User-agent: ViberBot
+Content-Signal: search=yes,ai-train=no,use=reference
+Allow: /
+
+# ---------------------------------------------------------------------------
+# SEO AUDITS, SEARCH TESTING, SHOPPING, AND AD VALIDATION
+# AdsBot-Google and Mediapartners-Google receive explicit groups because some
+# Google special-case crawlers do not use the global wildcard group.
+# ---------------------------------------------------------------------------
+
+User-agent: Google-InspectionTool
+User-agent: Storebot-Google
+User-agent: AdsBot-Google
+User-agent: Mediapartners-Google
+User-agent: OAI-AdsBot
+User-agent: AhrefsBot
+User-agent: AhrefsSiteAudit
+User-agent: SemrushBot
+User-agent: SiteAuditBot
+User-agent: Rogerbot
+User-agent: MJ12bot
+User-agent: DotBot
+User-agent: DataForSeoBot
+User-agent: Chrome-Lighthouse
+Content-Signal: search=yes,ai-train=no,use=reference
+Allow: /
+
+# ---------------------------------------------------------------------------
+# DEFAULT PUBLIC-WEB ACCESS
+# This also permits legitimate crawlers not yet named above.
+# ---------------------------------------------------------------------------
+
+User-agent: *
+Content-Signal: search=yes,ai-train=no,use=reference
+Allow: /
+
+# ---------------------------------------------------------------------------
+# DEDICATED MODEL-TRAINING, EXTENDED-USE, AND BULK-DATASET CRAWLERS
+# Search-specific and user-directed counterparts remain allowed above.
+# Crawl access remains allowed at the owner's explicit request. The content
+# signal reserves training use; this group is not a technical crawl block.
+# ---------------------------------------------------------------------------
+
+User-agent: Applebot-Extended
+User-agent: Google-Extended
+User-agent: GPTBot
+User-agent: ClaudeBot
+User-agent: anthropic-ai
+User-agent: Claude-Web
+User-agent: Amazonbot
+User-agent: meta-externalagent
+User-agent: Bytespider
+User-agent: CCBot
+User-agent: cohere-training-data-crawler
+User-agent: AI2Bot
+User-agent: Ai2Bot-Dolma
+User-agent: AI2Bot-DeepResearchEval
+User-agent: DigitalOceanGenAICrawler
+User-agent: img2dataset
+User-agent: laion-huggingface-processor
+Content-Signal: search=yes,ai-train=no,use=reference
+Allow: /
+
+# Sitemap Location:
 Sitemap: https://pearconnect.mellozone.site/sitemap.xml
+
+# ---------------------------------------------------------------------------
+# END SAMMY MANAGED CONTENT [MODIFIED CONTENT FOR OPTIMIZATION]

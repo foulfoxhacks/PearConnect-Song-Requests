@@ -8,7 +8,7 @@ const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/rele
   <div class="landing">
     <a href="#content" class="home-skip">Skip to content</a>
     <header class="home-header">
-      <a class="home-brand" href="/" aria-label="PearConnect home"><img src="/pear.svg" width="29" height="34" alt=""><span>Pear<span>Connect</span></span></a>
+      <a class="home-brand" href="/" aria-label="PearConnect home"><img src="/pear.svg" width="29" height="34" alt="" aria-hidden="true"><span>Pear<span>Connect</span></span></a>
       <button class="menu-toggle" :aria-expanded="menuOpen" aria-controls="home-nav" @click="menuOpen = !menuOpen">Menu <span aria-hidden="true">☰</span></button>
       <nav id="home-nav" aria-label="Main navigation" :class="{ open: menuOpen }">
         <a href="#how-it-works" @click="menuOpen = false">How it works</a>
@@ -28,7 +28,7 @@ const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/rele
           <div class="hero-actions"><a class="download-button" :href="download"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5l8-1v7H3zm10-1 8-1v8h-8zM3 13h8v7l-8-1zm10 0h8v8l-8-1z"/></svg>Download for Windows <span aria-hidden="true">↓</span></a><a href="/docs/" class="guide-link">Read the setup guide <span aria-hidden="true">→</span></a></div>
           <p class="release-caption">Free &amp; open source <span>·</span> Windows x64 <span>·</span> v0.3.0-beta.1 preview</p>
         </div>
-        <figure class="hero-product"><div class="product-label"><span class="live-mark" aria-hidden="true"></span> PEARCONNECT DESKTOP <span class="preview-label">PRODUCT PREVIEW</span></div><img src="/desktop-overview.png" width="1839" height="1220" alt="PearConnect desktop showing player connection, request intake, input activity and recent request results"><figcaption>One view for your music, connections and requests. Shown with sample data.</figcaption></figure>
+        <figure class="hero-product"><div class="product-label"><span class="live-mark" aria-hidden="true"></span> PEARCONNECT DESKTOP <span class="preview-label">PRODUCT PREVIEW</span></div><img src="/desktop-overview.png" width="1839" height="1220" fetchpriority="high" decoding="async" alt="PearConnect desktop showing player connection, request intake, input activity and recent request results"><figcaption>One view for your music, connections and requests. Shown with sample data.</figcaption></figure>
       </section>
 
       <div class="compatibility"><span>BUILT AROUND YOUR STREAM</span><p>Pear Desktop <b>+</b> TikFinity <b>/</b> Streamer.bot <b>/</b> Twitch <b>/</b> YouTube</p></div>
@@ -43,6 +43,6 @@ const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/rele
 
       <section class="help-line section-wrap"><h2>A little guidance goes a long way.</h2><a href="/docs/">Explore the documentation <span aria-hidden="true">→</span></a></section>
     </main>
-    <footer class="home-footer"><a class="home-brand" href="/"><img src="/pear.svg" width="23" height="28" alt=""><span>Pear<span>Connect</span></span></a><p>Independent community software. Not affiliated with TikTok, TikFinity or Pear Desktop.</p><div><a href="/docs/security">Privacy &amp; security</a><a href="https://github.com/foulfoxhacks/PearConnect-Song-Requests/blob/main/LICENSE">MIT license</a></div></footer>
+    <footer class="home-footer"><a class="home-brand" href="/"><img src="/pear.svg" width="23" height="28" alt="" aria-hidden="true"><span>Pear<span>Connect</span></span></a><p>Independent community software. Not affiliated with TikTok, TikFinity or Pear Desktop.</p><div><a href="https://github.com/foulfoxhacks">By FoulFoxHacks</a><a href="/docs/security">Privacy &amp; security</a><a href="https://github.com/foulfoxhacks/PearConnect-Song-Requests/blob/main/LICENSE">MIT license</a></div></footer>
   </div>
 </template>
