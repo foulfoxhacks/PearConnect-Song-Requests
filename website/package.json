@@ -4,13 +4,15 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vitepress dev --host 127.0.0.1",
-    "build": "vitepress build",
-    "preview": "vitepress preview --host 127.0.0.1",
+    "dev": "npm run images && vitepress dev --host 127.0.0.1",
+    "build": "npm run images && vitepress build",
+    "images": "node scripts/optimize-images.mjs",
+    "preview": "wrangler pages dev dist --ip 127.0.0.1 --port 5173",
     "check": "node scripts/check-site.mjs",
     "deploy": "wrangler pages deploy dist --project-name pearconnect --branch main"
   },
   "devDependencies": {
+    "sharp": "^0.35.4",
     "vitepress": "2.0.0-alpha.20",
     "vue": "^3.5.0",
     "wrangler": "^4.129.0"

@@ -2,3 +2,4 @@ node_modules/
 dist/
 .vitepress/cache/
 .wrangler/
+.vitepress/theme/assets/desktop-*.webp

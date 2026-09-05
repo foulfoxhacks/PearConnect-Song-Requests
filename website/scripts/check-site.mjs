@@ -68,6 +68,8 @@ for (const [page, html] of pages) {
     assert.equal(webpage.url, canonical);
     assert.equal(webpage.name, title);
     assert.equal(webpage.description, description);
+    assert.match(html, /itemscope[^>]*itemtype="https:\/\/schema.org\/WebPage"/, `${page} needs explicit WebPage microdata`);
+    assert.ok(html.includes(`itemid="${canonical}#webpage"`));
     if (page.startsWith('docs/')) {
       const crumbs = schema['@graph'].find(node => node['@type'] === 'BreadcrumbList').itemListElement;
       assert.equal(crumbs.at(-1).item, canonical);
@@ -77,10 +79,18 @@ for (const [page, html] of pages) {
       assert.equal(app.softwareVersion, '0.3.0-beta.1');
       assert.ok(html.includes(app.downloadUrl), 'Structured download must match the visible download');
       assert.ok(!app.aggregateRating && !app.review, 'Do not invent review markup');
+      assert.match(html, /itemtype="https:\/\/schema.org\/SoftwareApplication"/);
+      assert.ok(html.includes(`itemid="${origin}/#software"`), 'Microdata and JSON-LD must identify the same app');
+      assert.match(html, /itemprop="softwareVersion">0\.3\.0-beta\.1</);
     }
   }
   for (const [tag] of html.matchAll(/<img\b[^>]*>/g)) {
     assert.notEqual(attribute(tag, 'alt'), undefined, `${page} image is missing its alt attribute`);
+    const srcset = attribute(tag, 'srcset');
+    if (srcset) {
+      const candidates = srcset.split(',').map(candidate => candidate.trim().split(/\s+/)[0]);
+      for (const candidate of candidates) assert.ok(known.has(candidate.replace(/^\//, '')), `Missing responsive image: ${candidate}`);
+    }
   }
   for (const [, raw] of html.matchAll(/\b(?:href|src)="([^"]+)"/g)) {
     if (/^(?:data:|mailto:|tel:)/.test(raw)) continue;
@@ -95,6 +105,8 @@ for (const [page, html] of pages) {
 }
 assert.ok(paths.some(path => /localSearchIndex.*\.js$/.test(path) || /local-search-index.*\.js$/.test(path)), 'Local search index must be generated');
 const home = pages.get('index.html');
+assert.match(home, /srcset="[^"]+480w, [^"]+960w, [^"]+1600w"/);
+assert.ok(!home.includes('as="font"'), 'System fonts must not preload unused webfonts');
 assert.match(home, /releases\/download\/v0\.3\.0-beta\.1\/PearConnect-0\.3\.0-beta\.1-win-x64\.zip/);
 assert.match(pages.get('docs/simple.html'), /21213/);
 assert.match(pages.get('docs/advanced.html'), /PearConnect\.Url/);
@@ -128,4 +140,7 @@ const sitemap = await readFile(join(root, 'sitemap.xml'), 'utf8');
 const locations = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map(match => match[1]);
 assert.equal(locations.length, pages.size - 1, 'Only indexable pages belong in the sitemap');
 assert.ok(locations.every(url => url.startsWith(origin + '/') && !url.includes('404')));
+const headers = await readFile(join(root, '_headers'), 'utf8');
+assert.match(headers, /X-Robots-Tag: follow, max-image-preview:large/);
+assert.match(headers, /\/assets\/\*\s+Cache-Control: public, max-age=31536000, immutable/);
 console.log(`Site checks passed: ${pages.size} HTML pages, ${checked} local links/assets, metadata, JSON-LD, image alternatives, crawler policy, sitemap and local search output.`);

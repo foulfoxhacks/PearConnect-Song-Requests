@@ -14,6 +14,8 @@ npm run dev
 
 Edit guides in `content/docs/`, the homepage in `.vitepress/theme/HomePage.vue`, and shared styles in `.vitepress/theme/style.css`. The homepage's screenshot is an actual PearConnect window using synthetic test fixtures. The logo reuses the application's original PearConnect mark.
 
+`npm run dev` and `npm run build` generate 480-, 960- and 1600-pixel WebP previews from `content/public/desktop-overview.png` using Sharp. Generated previews are ignored by Git and imported by Vite so their production filenames include a content hash. Keep the original PNG for social previews. The page uses native system fonts and downloads no webfonts.
+
 ## Verify and publish
 
 ```sh
@@ -27,15 +29,19 @@ Deploy requires a Cloudflare account authorized for this project through Wrangle
 
 `check` verifies generated routes, local links, anchors, assets and the local search index. Pages serves actual HTML for each documentation route and the generated 404 page. The `_headers` file sets response headers; inline script/style allowances support VitePress's theme bootstrap and rendered styling.
 
+After building, `npm run preview` serves `http://127.0.0.1:5173/` with Wrangler's local Pages runtime, including the production `_headers` rules. Use this command for local SEO/header audits. Vite's development server does not emulate Cloudflare response headers. Stop an existing process on that port before starting another preview.
+
 ## Search metadata and crawler policy
 
-`.vitepress/seo.mjs` generates per-page canonical URLs, robots directives, Open Graph and Twitter cards, and JSON-LD for the website, publisher, application and documentation breadcrumbs. These appear in the published HTML and the page data used by client navigation. The default 404 uses `noindex, follow` and is excluded from the sitemap. Update the software version and download URL in this module when publishing a new application release.
+`.vitepress/seo.mjs` generates per-page canonical URLs, robots directives, Open Graph and Twitter cards, and JSON-LD for the website, publisher, application and documentation breadcrumbs. These appear in the published HTML and the page data used by client navigation. `theme/Layout.vue` also emits explicit WebPage microdata, and the homepage download section emits SoftwareApplication microdata with the same entity IDs as the JSON-LD. The default 404 uses `noindex, follow` and is excluded from the sitemap. Update the software version and download URL in both representations when publishing a new application release.
+
+All public responses include `X-Robots-Tag` with follow and preview directives. Indexable pages declare `index` in their robots meta tag; the global header intentionally omits `index` so it does not contradict a missing page's `noindex` meta tag. Explicit `/404` and `/404.html` responses also receive a `noindex` header. Hashed `/assets/` files receive a one-year immutable cache policy; HTML retains Cloudflare's revalidation behavior.
 
 Author and publisher are FoulFoxHacks. The keyword tag is descriptive metadata only; [Google does not use it for indexing or ranking](https://developers.google.com/search/docs/crawling-indexing/special-tags). Decorative logos have empty alt text and are hidden from assistive technology because nearby text already names the brand. The product screenshot has descriptive alt text. Links use visible descriptive text; redundant title attributes are not required.
 
 `content/public/robots.txt` contains the owner's crawler policy. All named crawlers, including dedicated training agents, intentionally retain `Allow: /`. Every group repeats `search=yes,ai-train=no,use=reference`; `ai-input` remains unspecified. `use=reference` is retained as a publisher-defined extension, not a promise of crawler support. [Cloudflare's documented Content Signals vocabulary](https://blog.cloudflare.com/content-signals-policy/) defines `search`, `ai-input` and `ai-train`. These signals express usage preferences; they do not technically prevent scraping. The sitemap points to this site's production domain.
 
-Audit `https://pearconnect.mellozone.site/` or the built preview for production metadata. A development page contains Vite's development client, and a browser extension may report injected resources. The site self-hosts its font and has no Google Fonts dependency.
+Audit `https://pearconnect.mellozone.site/` or the built preview for production metadata. A development page contains Vite's development client, and a browser extension may report injected resources. The site uses native system fonts and has no Google Fonts dependency.
 
 ## Dependencies
 
