@@ -27,7 +27,17 @@ export function apiHost(value = 'http://127.0.0.1:26538') {
   return url.origin;
 }
 
-export function loadConfig(env = process.env) {
+export function websocketUrl(value = 'ws://127.0.0.1:21213/') {
+  let url;
+  try { url = new URL(value); } catch { throw new InputError('TIKFINITY_WS_URL must be a local WebSocket URL.'); }
+  if (!['ws:', 'wss:'].includes(url.protocol) || !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname) ||
+      url.username || url.password || url.search || url.hash || url.pathname !== '/') {
+    throw new InputError('TIKFINITY_WS_URL must use ws/wss on localhost, without credentials, path, query or fragment.');
+  }
+  return url.href;
+}
+
+export function loadConfig(env = process.env, { allowUnconfigured = false } = {}) {
   const commands = {};
   for (const [key, variable, fallback] of [
     ['request', 'CMD_REQUEST', 'sr'], ['nowPlaying', 'CMD_NOWPLAYING', 'np'],
@@ -41,7 +51,10 @@ export function loadConfig(env = process.env) {
   const split = (value) => (value || '').split(',').map((s) => s.trim()).filter(Boolean);
   const dryRun = booleanSetting(env, 'DRY_RUN');
   const token = (env.YTMD_TOKEN || '').trim();
-  if (!dryRun && !token) throw new InputError('YTMD_TOKEN is not set. Run npm run auth, or use npm run start:dry-run for a no-playback test.');
+  if (!allowUnconfigured && !dryRun && !token) throw new InputError('YTMD_TOKEN is not set. Run npm run auth, or use npm run start:dry-run for a no-playback test.');
+  // Missing mode means an existing v0.2 configuration: preserve automation.
+  const connectionMode = (env.CONNECTION_MODE || 'advanced').trim().toLowerCase();
+  if (!['simple', 'advanced'].includes(connectionMode)) throw new InputError('CONNECTION_MODE must be simple or advanced.');
   const timeoutMs = numberSetting(env, 'YTMD_TIMEOUT_MS', 10000, 60000);
   if (timeoutMs < 100) throw new InputError('YTMD_TIMEOUT_MS must be between 100 and 60000.');
   const secret = (env.TIKFINITY_SECRET || '').trim();
@@ -52,11 +65,14 @@ export function loadConfig(env = process.env) {
   }
   return {
     host: apiHost(env.YTMD_HOST || undefined), token, timeoutMs, dryRun, secret,
+    connectionMode, websocketUrl: websocketUrl(env.TIKFINITY_WS_URL || undefined),
+    requestsEnabled: booleanSetting(env, 'REQUESTS_ENABLED', connectionMode === 'advanced'),
+    clientId: (env.YTMD_CLIENT_ID || 'ytmd-stream-bot').trim(),
     port: numberSetting(env, 'TIKFINITY_PORT', 7280, 65535), commands,
     cooldownSeconds: numberSetting(env, 'COOLDOWN_SECONDS', 60),
     maxSongSeconds: numberSetting(env, 'MAX_SONG_SECONDS', 420, 604800),
     maxPerUser: numberSetting(env, 'MAX_PER_USER', 2, 1000),
-    blocklist: split(env.BLOCKLIST), skipAllowlist: split(env.SKIP_ALLOWLIST),
+    blocklist: split(env.BLOCKLIST), skipAllowlist: split(env.SKIP_ALLOWLIST), requestAllowlist: split(env.REQUEST_ALLOWLIST),
     twitch, channelId: env.YOUTUBE_CHANNEL_ID?.trim(),
   };
 }

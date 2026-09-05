@@ -1,0 +1,10 @@
+{
+  "event": "chat",
+  "data": {
+    "uniqueId": "fixture_viewer",
+    "userId": "1234567890123456789",
+    "nickname": "Display name is not identity",
+    "comment": "!sr Björk  \"Jóga\" 🦊",
+    "msgId": "9876543210987654321"
+  }
+}

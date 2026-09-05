@@ -1,5 +1,6 @@
 // src/platforms/twitch.js
 import tmi from 'tmi.js';
+import { dispatchChat } from '../commands.js';
 
 export function startTwitch({ channel, username, oauth, commands, queue, skipAllowlist, log }) {
   if (!channel) {
@@ -19,32 +20,18 @@ export function startTwitch({ channel, username, oauth, commands, queue, skipAll
   });
 
   client.on('connected', () => log.info(`[twitch] connected as ${username} -> #${channel}`));
-  client.on('disconnected', (reason) => log.warn('[twitch] disconnected:', reason));
+  client.on('disconnected', () => log.warn('[twitch] disconnected.'));
 
   client.on('message', async (chan, tags, message, self) => {
     if (self) return;
-    const text = (message || '').trim();
-    if (!text.startsWith('!')) return;
-
-    const [rawCmd, ...rest] = text.slice(1).split(/\s+/);
-    const cmd = rawCmd.toLowerCase();
-    const args = rest.join(' ');
-    const user = tags.username || tags['display-name'] || 'viewer';
+    const user = tags.username;
     const userId = tags['user-id'] || '';
 
-    const reply = (msg) => client.say(chan, msg).catch((e) => log.error('[twitch.say]', e.message));
-
-    if (cmd === commands.request) {
-      await queue.handleRequest({ user, userId, query: args, platform: 'twitch', reply });
-    } else if (cmd === commands.nowPlaying) {
-      await queue.handleNowPlaying({ user, reply });
-    } else if (cmd === commands.queue) {
-      await queue.handleQueuePeek({ user, reply });
-    } else if (cmd === commands.skip) {
-      await queue.handleSkip({ user, userId, platform: 'twitch', reply, allowlist: skipAllowlist });
-    }
+    const reply = (msg) => client.say(chan, msg).catch(() => log.error('[twitch.say] Reply delivery failed.'));
+    try { await dispatchChat({ message, commands, queue, skipAllowlist, user, userId, platform: 'twitch', reply }); }
+    catch { log.error('[twitch] Command processing failed.'); }
   });
 
-  client.connect().catch((e) => log.error('[twitch] connect failed:', e.message));
+  client.connect().catch(() => log.error('[twitch] Connection failed. Check credentials and connectivity.'));
   return client;
 }

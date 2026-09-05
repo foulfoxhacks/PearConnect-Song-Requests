@@ -5,6 +5,7 @@
 // on YouTube, configure a separate chatbot (Nightbot, etc.) to mirror them
 // or use the official YouTube Data API with OAuth (out of scope here).
 import { LiveChat } from 'youtube-chat';
+import { dispatchChat } from '../commands.js';
 
 export function startYouTube({ channelId, commands, queue, skipAllowlist, log }) {
   if (!channelId) {
@@ -16,31 +17,20 @@ export function startYouTube({ channelId, commands, queue, skipAllowlist, log })
 
   live.on('start', (liveId) => log.info(`[youtube] connected to live chat ${liveId}`));
   live.on('end', () => log.warn('[youtube] live chat ended'));
-  live.on('error', (err) => log.error('[youtube] error:', err?.message || err));
+  live.on('error', () => log.error('[youtube] Connection error. Check channel and connectivity.'));
 
   live.on('chat', async (item) => {
-    const text = (item.message || []).map((m) => m.text || '').join('').trim();
-    if (!text.startsWith('!')) return;
-
-    const [rawCmd, ...rest] = text.slice(1).split(/\s+/);
-    const cmd = rawCmd.toLowerCase();
-    const args = rest.join(' ');
-    const user = item.author?.name || 'viewer';
+    const text = (Array.isArray(item.message) ? item.message : []).map((m) => m.text || '').join('').trim();
+    const user = item.author?.name;
     const userId = item.author?.channelId || '';
 
     const reply = (msg) => log.info(`[youtube reply -> ${user}] ${msg}`);
 
-    if (cmd === commands.request) {
-      await queue.handleRequest({ user, userId, query: args, platform: 'youtube', reply });
-    } else if (cmd === commands.nowPlaying) {
-      await queue.handleNowPlaying({ user, reply });
-    } else if (cmd === commands.queue) {
-      await queue.handleQueuePeek({ user, reply });
-    } else if (cmd === commands.skip) {
-      await queue.handleSkip({ user, userId, platform: 'youtube', reply, allowlist: skipAllowlist });
-    }
+    if (!userId) return; // Never use a non-unique display name for YouTube accounting.
+    try { await dispatchChat({ message: text, commands, queue, skipAllowlist, user, userId, platform: 'youtube', reply }); }
+    catch { log.error('[youtube] Command processing failed.'); }
   });
 
-  live.start().catch((e) => log.error('[youtube] start failed:', e.message));
+  live.start().catch(() => log.error('[youtube] Could not start live chat.'));
   return live;
 }

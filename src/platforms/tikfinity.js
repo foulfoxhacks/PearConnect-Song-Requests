@@ -6,7 +6,7 @@ import { InputError, validatePayload } from '../validation.js';
 const digest = (value) => createHash('sha256').update(value).digest();
 const asyncRoute = (fn) => (req, res, next) => Promise.resolve(fn(req, res)).catch(next);
 
-export function createTikfinityApp({ secret = '', queue, skipAllowlist = [], log = console, dryRun = false, now = Date.now }) {
+export function createTikfinityApp({ secret = '', queue, skipAllowlist = [], log = console, dryRun = false, now = Date.now, getStatus, getDiagnostics }) {
   const app = express();
   const expectedSecret = digest(secret);
   const cache = new Map();
@@ -27,6 +27,8 @@ export function createTikfinityApp({ secret = '', queue, skipAllowlist = [], log
   });
 
   app.get('/healthz', (_req, res) => res.json({ ok: true, mode: dryRun ? 'dry-run' : 'live' }));
+  if (getStatus) app.get('/status', (_req, res) => res.json(getStatus()));
+  if (getDiagnostics) app.get('/diagnostics', (_req, res) => res.json(getDiagnostics()));
   app.get('/readyz', asyncRoute(async (_req, res) => {
     if (dryRun) return res.json({ ok: true, mode: 'dry-run', pearDesktop: 'not_checked' });
     try {

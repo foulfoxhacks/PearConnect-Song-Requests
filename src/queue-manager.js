@@ -1,9 +1,10 @@
 import { InputError, text } from './validation.js';
+import { isAllowed } from './commands.js';
 
 // Local policy and request accounting. Playback remains owned by Pear Desktop.
 export class QueueManager {
   constructor({ ytmd, cooldownSeconds = 60, maxSongSeconds = 420, maxPerUser = 2,
-    blocklist = [], logger = console, requestCommand = 'sr', dryRun = false, now = Date.now }) {
+    blocklist = [], requestAllowlist = [], logger = console, requestCommand = 'sr', dryRun = false, now = Date.now }) {
     this.ytmd = ytmd;
     this.cooldown = cooldownSeconds * 1000;
     this.maxSongSeconds = maxSongSeconds;
@@ -11,6 +12,7 @@ export class QueueManager {
     this.blocklist = blocklist.map((s) => s.toLowerCase()).filter(Boolean);
     this.log = logger;
     this.requestCommand = requestCommand;
+    this.requestAllowlist = requestAllowlist;
     this.dryRun = dryRun;
     this.now = now;
     this.lastRequest = new Map();
@@ -46,18 +48,22 @@ export class QueueManager {
 
   #blocked(value) { return this.blocklist.some((b) => value.toLowerCase().includes(b)); }
 
-  async handleRequest({ user, userId = '', query, platform = 'tiktok', reply }) {
+  async handleRequest({ user, userId = '', query, platform = 'tiktok', reply, canMutate = () => true, onStage = () => {} }) {
     try {
       ({ user, userId } = this.#cleanIdentity(user, userId));
       query = text(query ?? '', 'query', { optional: true });
       platform = text(platform, 'platform', { max: 32 });
     } catch (error) { return this.#reply(reply, false, 'invalid_input', error.message); }
     if (!query) return this.#reply(reply, false, 'usage', `@${user} usage: !${this.requestCommand} <song name>`);
+    if (this.requestAllowlist.length && !isAllowed({ user, userId, platform }, this.requestAllowlist)) {
+      return this.#reply(reply, false, 'forbidden', `@${user} song requests are limited to allowed users.`);
+    }
     if (this.#blocked(query)) return this.#reply(reply, false, 'blocked', `@${user} that request was blocked.`);
     if (this.dryRun) return this.#reply(reply, true, 'dry_run', `@${user} dry-run: request validated. No song searched or queued.`, { dryRun: true });
     this.#prune();
     const key = JSON.stringify([platform, userId || user.toLowerCase()]);
     if (this.inFlight.has(key)) return this.#reply(reply, false, 'busy', `@${user} your previous request is still processing.`);
+    if (this.inFlight.size >= 32) return this.#reply(reply, false, 'busy', 'Too many requests are processing. Try later.');
     if (this.lastRequest.has(key)) {
       const remaining = Math.max(0, Math.ceil((this.cooldown - (this.now() - this.lastRequest.get(key))) / 1000));
       if (remaining) return this.#reply(reply, false, 'cooldown', `@${user} slow down - try again in ${remaining}s.`, { retryAfter: remaining });
@@ -67,16 +73,25 @@ export class QueueManager {
     }
     // Reserve before the first await so concurrent requests cannot race the quota.
     this.inFlight.add(key);
+    let writeStarted = false;
     try {
+      onStage('searching');
       const song = await this.ytmd.findFirstSong(query);
+      // Pause, mode switches and disconnects revoke work that has not reached the player yet.
+      if (!canMutate()) return this.#reply(reply, false, 'intake_changed', 'Request intake changed while searching. No song was queued.');
+      if (this.requestAllowlist.length && !isAllowed({ user, userId, platform }, this.requestAllowlist)) {
+        return this.#reply(reply, false, 'forbidden', 'Request permissions changed while searching.');
+      }
       if (!song) return this.#reply(reply, false, 'no_results', `@${user} no results for "${query.slice(0, 40)}".`);
-      if (this.#blocked(`${song.title} ${song.artist}`)) return this.#reply(reply, false, 'blocked', `@${user} that request was blocked.`);
+      if (this.#blocked(query) || this.#blocked(`${song.title} ${song.artist}`)) return this.#reply(reply, false, 'blocked', `@${user} that request was blocked.`);
       if (this.maxSongSeconds > 0 && (!Number.isFinite(song.durationSec) || song.durationSec <= 0)) {
         return this.#reply(reply, false, 'unknown_duration', `@${user} the song length could not be verified. Try another result.`);
       }
       if (this.maxSongSeconds > 0 && song.durationSec > this.maxSongSeconds) {
         return this.#reply(reply, false, 'too_long', `@${user} "${song.title}" is too long (max ${formatDur(this.maxSongSeconds)}).`);
       }
+      onStage('enqueuing');
+      writeStarted = true;
       await this.ytmd.addToQueue(song.videoId);
       const now = this.now();
       if (this.cooldown > 0) this.lastRequest.set(key, now);
@@ -95,7 +110,7 @@ export class QueueManager {
       this.log.error('[request] Pear Desktop request failed.');
       const timeout = error.code === 'UPSTREAM_TIMEOUT';
       return this.#reply(reply, false, timeout ? 'upstream_timeout' : 'upstream_error',
-        `@${user} ${timeout ? 'the player timed out' : 'the player request failed'}. Check Pear Desktop and its queue before retrying.`);
+        `@${user} ${timeout ? 'the player timed out' : 'the player request failed'}. Check Pear Desktop and its queue before retrying.`, { outcomeUncertain: writeStarted });
     } finally { this.inFlight.delete(key); }
   }
 
@@ -125,17 +140,13 @@ export class QueueManager {
     try { ({ user, userId } = this.#cleanIdentity(user, userId)); }
     catch (error) { return this.#reply(reply, false, 'invalid_input', error.message); }
     // YouTube display names are not unique: require the author's channel ID there.
-    const allowed = allowlist.some((entry) => {
-      if (platform === 'youtube') return !!userId && entry === `youtube:${userId}`;
-      const value = entry.toLowerCase();
-      return value === user.toLowerCase() || value === `${platform}:${user.toLowerCase()}`;
-    });
+    const allowed = isAllowed({ user, userId, platform }, allowlist);
     if (!allowed) return this.#reply(reply, false, 'forbidden', `@${user} you can't skip.`);
     if (this.dryRun) return this.#reply(reply, true, 'dry_run', `@${user} dry-run: skip authorized but not executed.`, { dryRun: true });
     try {
       await this.ytmd.next();
       return this.#reply(reply, true, 'skipped', `@${user} skipped.`);
-    } catch { return this.#reply(reply, false, 'upstream_error', `@${user} couldn't skip. Check the player before retrying.`); }
+    } catch { return this.#reply(reply, false, 'upstream_error', `@${user} couldn't skip. Check the player before retrying.`, { outcomeUncertain: true }); }
   }
 }
 

@@ -9,6 +9,13 @@
 - PC-005: A transport success must not be advertised as an accepted song. Dry-run tests must never mutate playback or quota state.
 - PC-006: Test output must distinguish mocked/local contract checks from actual desktop imports and live-platform verification.
 - PC-007: Build generated integration assets from reviewed source; keep source and generated output synchronized.
+- PC-008: Simple and Advanced share one engine; only one TikTok input route accepts commands at a time. Mode changes pause intake and drain in-flight work without erasing counters.
+- PC-009: Desktop and CLI share instance exclusion. Pausing requests never pauses playback. Only enqueue confirmation may be claimed after a successful write.
+- PC-010: New configurations select Simple and start paused; missing mode in existing configurations preserves Advanced.
+
+## Next-version foundation audit (2026-09-05)
+
+Audited baseline: `0bb62c7`. Added shared engine lifecycle, repairable disconnected setup, shared command parsing and permissions, cross-input capacity, intake cancellation before enqueue, bounded request activity, sanitized diagnostics, instance exclusion, direct TikFinity WebSocket input and CLI controls. Preserved native webhook authentication, Origin/host guards, POST-only mutations and the unchanged Streamer.bot package. Local original smoke assertions and 67 Node regression tests pass. See `docs/NEXT-VERSION.md` for migration and the distinction between synthetic fixtures, real loopback tests and outstanding live acceptance.
 
 ## Integration hardening pass
 
