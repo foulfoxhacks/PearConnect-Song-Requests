@@ -115,6 +115,7 @@ const download = 'https://github.com/foulfoxhacks/PearConnect-Song-Requests/rele
             <a class="download-button" :href="download" itemprop="downloadUrl">Download the Windows preview <span aria-hidden="true">↓</span></a>
             <p>Portable ZIP · Free &amp; open source</p>
             <div class="download-links"><a href="/docs/install">Installation guide <span aria-hidden="true">↗</span></a><a href="/docs/cli">CLI setup <span aria-hidden="true">↗</span></a></div>
+            <p class="download-note">Want the matching music player? <a href="/docs/pearconnect-player">Explore PearConnect Player →</a> — custom appearance, web widgets and verified queues.</p>
             <p class="preview-note">Preview release · unsigned Windows build. Live-platform and fresh-machine acceptance are still in progress. <a href="/docs/releases" itemprop="releaseNotes">Read the release notes.</a></p>
           </div>
         </div>

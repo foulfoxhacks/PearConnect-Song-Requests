@@ -7,6 +7,8 @@ description: Enable Pear Desktop's API Server and authorize PearConnect without 
 
 Pear Desktop owns your playback and music queue. PearConnect uses the player's local API to search and add songs.
 
+You can also use the separate [PearConnect Player preview](./pearconnect-player), with verified queue additions, appearance settings, web widgets and SponsorBlock controls.
+
 ## Enable the API Server
 
 Open Pear Desktop and enable its **API Server** plugin. Keep the server on localhost. PearConnect's default player address is:

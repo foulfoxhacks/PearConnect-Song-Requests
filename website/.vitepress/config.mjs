@@ -35,6 +35,7 @@ export default defineConfig({
           { text: 'Welcome to PearConnect', link: '/docs/' },
           { text: 'Download & install', link: '/docs/install' },
           { text: 'Connect your player', link: '/docs/player' }
+          ,{ text: 'PearConnect Player preview', link: '/docs/pearconnect-player' }
           ,{ text: 'Guided connection test', link: '/docs/validation' }
         ] },
         { text: 'Connect your stream', items: [
