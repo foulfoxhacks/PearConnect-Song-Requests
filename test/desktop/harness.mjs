@@ -17,7 +17,7 @@ try {
   assert.equal(safeStorage.isEncryptionAvailable(), true, 'OS credential storage must be available for desktop acceptance');
   const { SettingsStore } = await import('../../desktop/settings.js');
   const store = new SettingsStore(join(dataDir, 'settings.json'), safeStorage);
-  await store.write({ CONNECTION_MODE: 'advanced', DRY_RUN: 'true', TIKFINITY_PORT: '0', TIKFINITY_SECRET: 'desktop-test-private-secret' });
+  await store.write({ CONNECTION_MODE: 'advanced', DRY_RUN: 'true', DISCORD_ENABLED: 'false', TIKFINITY_PORT: '0', TIKFINITY_SECRET: 'desktop-test-private-secret' });
   const sampleArt = await readFile(new URL('../../desktop/assets/sample-cover.png', import.meta.url));
   runtime = await launchDesktop({ dataDir, show: false, studioOptions: { fetcher: async url => {
     assert.equal(new URL(url).hostname, 'i.ytimg.com'); return new Response(sampleArt, { headers: { 'content-type': 'image/png' } });
@@ -121,9 +121,22 @@ try {
   assert.equal((await evaluate('window.pearconnect.appearance({ WIDGET_ACCENT: "url(file:///secret)" })')).ok, false);
   await evaluate('document.querySelector("[data-view=studio]").click(); document.querySelector("#widget-form [name=WIDGET_LAYOUT]").value="compact"; document.querySelector("#widget-form").dispatchEvent(new Event("input", { bubbles: true }))');
   assert.equal(await evaluate('document.querySelector("#studio-widget .music-widget").dataset.layout'), 'compact');
-  assert.equal(controller.env.WIDGET_LAYOUT, undefined, 'preview does not persist before save');
+  assert.equal(controller.env.WIDGET_LAYOUT, 'cover', 'preview does not persist before save');
   await evaluate('document.querySelector("#widget-form").requestSubmit(); new Promise(resolve => setTimeout(resolve, 200))');
   assert.equal(controller.env.WIDGET_LAYOUT, 'compact');
+  assert.equal((await evaluate('window.pearconnect.discordLive("yes")')).ok, false);
+  assert.equal((await evaluate('window.pearconnect.appearance({ DISCORD_CLIENT_SECRET: "not-supported" })')).ok, false);
+  await evaluate('document.querySelector("#widget-form [name=WIDGET_LAYOUT]").value="vertical"; document.querySelector("#widget-form").dispatchEvent(new Event("input", { bubbles: true }))');
+  assert.equal(await evaluate('document.querySelector("#studio-widget .music-widget").dataset.layout'), 'vertical');
+  assert.match(await evaluate('document.querySelector("#overlay-size").textContent'), /400 ×/);
+  assert.equal(await evaluate('document.querySelector("#discord-form [name=DISCORD_ENABLED]").value'), 'false');
+  await evaluate('document.querySelector("#social-form [name=SOCIAL_TIKTOK]").value="@fixture"; document.querySelector("#social-form [name=SOCIAL_ENABLED]").value="true"; document.querySelector("#social-form").dispatchEvent(new Event("input", { bubbles: true }))');
+  assert.equal(await evaluate('document.querySelector("#social-preview .social-handle").textContent'), '@fixture');
+  assert.equal(controller.env.SOCIAL_TIKTOK, '', 'social preview stays local until saved');
+  assert.equal((await evaluate('window.pearconnect.appearance({ SOCIAL_TIKTOK:"@fixture", SOCIAL_ICONS:"mono", SOCIAL_ENABLED:"false" })')).ok, true);
+  assert.equal(controller.env.SOCIAL_TIKTOK, '@fixture');
+  await evaluate('call("snapshot", undefined, true)');
+  assert.equal(await evaluate('document.querySelector("#social-form [name=SOCIAL_ICONS]").value'), 'mono');
   assert.equal((await evaluate('window.pearconnect.appearance({APP_ICON:"orchid",APP_BACKGROUND:"dusk",APP_FONT:"humanist",APP_TEXT:"large"})')).ok, true);
   await evaluate('call("snapshot", undefined, true)');
   assert.equal(await evaluate('document.body.dataset.background'), 'dusk');

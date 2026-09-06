@@ -9,6 +9,7 @@ import { InputError } from '../src/validation.js';
 import { PlaybackStudio } from './studio.js';
 import { lastfmUrl } from '../src/playback.js';
 import { playerQueue } from '../src/player-queue.js';
+import { DiscordPresence } from './discord-presence.js';
 
 const { app, BrowserWindow, ipcMain, session, dialog, clipboard, shell, net, protocol, safeStorage, nativeImage } = electron;
 const directory = dirname(fileURLToPath(import.meta.url));
@@ -37,13 +38,15 @@ export async function launchDesktop({ dataDir = app.getPath('userData'), show = 
     return image.resize({ width: Math.min(640, size.width), quality: 'good' }).toPNG();
   }, ...studioOptions });
   await controller.studio.start();
+  controller.discord = new DiscordPresence({ getState: () => ({ running: controller.engine.lifecycle === 'running', requestsEnabled: controller.engine.requestsEnabled, track: controller.studio.snapshot().track }) });
+  controller.discord.configure(controller.env);
   const iconPath = () => join(directory, 'assets', `${controller.env.APP_ICON || 'pear'}.png`);
   const window = new BrowserWindow({ title: 'PearConnect Desktop', icon: iconPath(), width: 1320, height: 900, minWidth: 860, minHeight: 620, show: false, backgroundColor: '#151819',
     webPreferences: { preload: join(directory, 'preload.cjs'), nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true, webviewTag: false } });
   window.setMenuBarVisibility(false);
   session.defaultSession.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
   session.defaultSession.setPermissionCheckHandler(() => false);
-  const assets = new Map(['index.html', 'renderer.js', 'style.css', 'widget.js', 'widget.css', 'studio-ui.js', 'studio.css', 'assets/pear.png', 'assets/orchid.png', 'assets/ember.png', 'assets/sample-cover.png'].map(file => [`/` + file, join(directory, file)]));
+  const assets = new Map(['index.html', 'renderer.js', 'style.css', 'widget.js', 'widget.css', 'studio-ui.js', 'studio.css', 'social.js', 'social.css', ...['tiktok', 'twitch', 'discord', 'youtube', 'instagram', 'kick', 'website'].map(p => `assets/platforms/${p}.svg`), 'assets/pear.png', 'assets/orchid.png', 'assets/ember.png', 'assets/sample-cover.png'].map(file => [`/` + file, join(directory, file)]));
   protocol.handle('pearconnect', request => {
     const url = new URL(request.url);
     const artwork = /^\/artwork\/([a-f\d]{16})\.png$/.exec(url.pathname);
@@ -65,8 +68,10 @@ export async function launchDesktop({ dataDir = app.getPath('userData'), show = 
     openLastfmTerms: async () => { await shell.openExternal('https://www.last.fm/api/tos'); return { message: 'Last.fm API terms opened in your browser.' }; },
     similarTracks: () => controller.studio.similar(),
     openTrackInfo: async () => { const url = lastfmUrl(controller.studio.snapshot().metadata?.url); if (!url) throw new InputError('Last.fm information is not available for this track.'); await shell.openExternal(url); return { message: 'Opened this track on Last.fm.' }; },
-    copyOverlay: () => { clipboard.writeText(controller.studio.overlayUrl()); return { message: 'OBS browser-source URL copied. Keep this read-only link private. Set the source to 760 × 260, then resize it in your scene.' }; },
+    copyOverlay: () => { clipboard.writeText(controller.studio.overlayUrl()); return { message: 'Private browser-source URL copied. In TikTok Studio, turn on Custom resolution and use the dimensions shown above the preview. Keep source sound off and Always keep active on.' }; },
+    discordLive: value => { if (typeof value !== 'boolean') throw new InputError('Choose live or ended.'); if (!controller.discord.enabled) throw new InputError('Enable Discord presence first.'); controller.discord.setLive(value); return controller.snapshot(); },
     rotateOverlay: () => controller.rotateOverlay(),
+    copySocial: () => { clipboard.writeText(controller.studio.socialUrl()); return { message: 'Social ticker URL copied. Add a separate Link / Browser source at 600 × 120, or 400 × 120 for portrait. Keep source sound off.' }; },
     testPlayer: async () => { await controller.engine.testPlayer(); return controller.snapshot(); },
     authorize: () => controller.authorize(),
     pause: () => controller.intake(false),
@@ -153,7 +158,7 @@ export async function launchDesktop({ dataDir = app.getPath('userData'), show = 
   let stopping = false;
   window.on('close', event => {
     if (stopping) return; event.preventDefault(); stopping = true;
-    controller.studio.close().then(() => controller.stop()).finally(() => window.destroy());
+    Promise.allSettled([controller.discord.close(), controller.studio.close()]).then(() => controller.stop()).finally(() => window.destroy());
   });
   return { window, controller };
 }

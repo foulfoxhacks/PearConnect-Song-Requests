@@ -19,7 +19,7 @@ export class DesktopController {
     return this.snapshot();
   }
   snapshot() {
-    return { status: this.engine.status(), rules: this.engine.ruleValues(), session: this.session?.snapshot(), sessionMinutes: this.env.SESSION_MINUTES || '240',
+    return { status: this.engine.status(), discord: this.discord?.snapshot(), rules: this.engine.ruleValues(), session: this.session?.snapshot(), sessionMinutes: this.env.SESSION_MINUTES || '240',
       studio: this.studio?.snapshot() || { appearance: appearance(this.env), track: null, metadata: { state: 'disabled' }, overlayState: 'disabled', hasLastfmKey: !!this.env.LASTFM_KEY },
       connections: Object.fromEntries(CONNECTION_KEYS.map(key => [key, this.env[key] || ({ YTMD_HOST: this.engine.config.host, YTMD_CLIENT_ID: this.engine.config.clientId, YTMD_TIMEOUT_MS: String(this.engine.config.timeoutMs), TIKFINITY_WS_URL: this.engine.config.websocketUrl, TIKFINITY_PORT: String(this.engine.config.port) }[key] || '')])),
       hasPlayerCredential: !!this.env.YTMD_TOKEN, hasTwitchCredential: !!this.env.TWITCH_OAUTH,
@@ -34,10 +34,11 @@ export class DesktopController {
     return this.serialized(async () => {
       validateAppearance(values);
       const next = { ...this.env, ...values };
+      if (values.SOCIAL_ENABLED === 'true') next.OVERLAY_ENABLED = 'true';
       if (values.LASTFM_KEY === '') next.LASTFM_KEY = this.env.LASTFM_KEY || '';
       if (next.OVERLAY_ENABLED === 'true' && !next.OVERLAY_TOKEN) next.OVERLAY_TOKEN = newOverlayToken();
       await this.store.write(next); this.env = next;
-      await this.studio?.configure(); return this.snapshot();
+      await this.studio?.configure(); this.discord?.configure(this.env); return this.snapshot();
     });
   }
   async removeLastfm() { return this.serialized(async () => { const next = { ...this.env, LASTFM_KEY: '', LASTFM_ENABLED: 'false' }; await this.store.write(next); this.env = next; await this.studio?.configure(); return this.snapshot(); }); }
@@ -76,6 +77,7 @@ export class DesktopController {
     e.updateRules(Object.fromEntries(Object.entries(next).filter(([key]) => key in e.ruleValues())));
     e.requestsEnabled = false; this.startupError = null;
     try { await e.start(); } catch (error) { this.startupError = error.code === 'ENGINE_RUNNING' ? error.message : 'Engine could not restart. Check the webhook port and retry Connect.'; }
+    this.discord?.configure(this.env);
     return this.snapshot();
   }
   async saveConnections(values) {
@@ -104,7 +106,9 @@ export class DesktopController {
     return this.serialized(async () => this.reconfigure({ ...this.env, TIKFINITY_SECRET: randomBytes(32).toString('hex'), REQUESTS_ENABLED: 'false' }));
   }
   async importEnv(values) {
-    return this.serialized(async () => this.reconfigure({ ...values, CONNECTION_MODE: values.CONNECTION_MODE || 'advanced', REQUESTS_ENABLED: 'false' }));
+    // Keep the independent visual workspace and sharing preferences on import.
+    const visual = { ...appearance(this.env), ...Object.fromEntries(['LASTFM_KEY', 'OVERLAY_TOKEN'].filter(key => this.env[key]).map(key => [key, this.env[key]])) };
+    return this.serialized(async () => this.reconfigure({ ...visual, ...values, CONNECTION_MODE: values.CONNECTION_MODE || 'advanced', REQUESTS_ENABLED: 'false' }));
   }
   async reconnect() { return this.serialized(() => this.reconfigure({ ...this.env, REQUESTS_ENABLED: 'false' })); }
   async createSession(values) {

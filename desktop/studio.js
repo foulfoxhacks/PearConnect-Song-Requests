@@ -4,12 +4,14 @@ import { createHash, randomBytes, timingSafeEqual } from 'node:crypto';
 import { normalizePlayback, artworkUrl, boundedBody, LastFmClient } from '../src/playback.js';
 import { appearance } from './appearance.js';
 import { InputError } from '../src/validation.js';
+import { upcomingQueue } from './queue-view.js';
+import { overlayFeed } from './overlay-feed.js';
 
 export class PlaybackStudio {
-  #controller; #fetch; #decode; #art = null; #artSource = ''; #generation = 0; #lastfm; #key = ''; #token = ''; #polling; #server; #timer; #closed = false;
+  #controller; #fetch; #decode; #art = null; #artSource = ''; #generation = 0; #lastfm; #key = ''; #token = ''; #polling; #queuePolling; #server; #timer; #closed = false;
   constructor(controller, { fetcher = fetch, decode = data => data } = {}) {
     this.#controller = controller; this.#fetch = fetcher; this.#decode = decode;
-    this.track = null; this.metadata = { state: 'disabled' }; this.overlayState = 'disabled';
+    this.track = null; this.queue = { state: 'unavailable', tracks: [] }; this.metadata = { state: 'disabled' }; this.overlayState = 'disabled';
   }
   async start() { this.#closed = false; await this.configure(); void this.poll(); this.#timer = setInterval(() => void this.poll(), 2000); this.#timer.unref?.(); }
   async configure() {
@@ -24,7 +26,8 @@ export class PlaybackStudio {
   async poll() {
     if (this.#closed || this.#polling) return;
     this.#polling = this.#poll();
-    try { await this.#polling; } finally { this.#polling = null; }
+    try { await this.#polling; } catch { this.track = null; this.queue = { state: 'unavailable', tracks: [] }; }
+    finally { this.#polling = null; this.feed?.broadcast(); }
   }
   async #poll() {
     const c = this.#controller, engine = c.engine;
@@ -35,6 +38,16 @@ export class PlaybackStudio {
     if (this.#closed || c.busy || generation !== this.#generation || engineGeneration !== engine.generation || engine.lifecycle !== 'running') return;
     this.track = engine.playerState === 'ready' ? normalizePlayback(engine.currentTrack) : null;
     this.trackGeneration = engineGeneration;
+    // A slow queue read must not stall the artwork and playback clock.
+    const trackKeyForQueue = JSON.stringify([this.track?.videoId, this.track?.title]);
+    if (this.queueTrack !== trackKeyForQueue || !this.track) this.queue = { state: 'unavailable', tracks: [] };
+    if (this.track && !this.#queuePolling) {
+      const track = this.track;
+      this.#queuePolling = Promise.resolve().then(() => engine.player.getQueue()).then(rawQueue => {
+        if (this.#closed || c.busy || generation !== this.#generation || engineGeneration !== engine.generation || JSON.stringify([this.track?.videoId, this.track?.title]) !== trackKeyForQueue) return;
+        this.queue = upcomingQueue(rawQueue, track); this.queueTrack = trackKeyForQueue;
+      }).catch(() => { this.queue = { state: 'unavailable', tracks: [] }; }).finally(() => { this.#queuePolling = null; this.feed?.broadcast(); });
+    }
     const raw = this.track ? engine.currentTrack : null;
     const source = artworkUrl(raw?.imageSrc);
     if (!source) { this.#art = null; this.#artSource = ''; }
@@ -66,7 +79,8 @@ export class PlaybackStudio {
     const live = c.engine.lifecycle === 'running' && c.engine.playerState === 'ready' && !c.engine.config.dryRun && this.trackGeneration === c.engine.generation;
     const track = live && this.track && Date.now() - this.track.updatedAt < 10000 ? { ...this.track } : null;
     return { track, art: track && this.#art ? (overlay ? `./art.png?v=${this.#art.hash}` : `pearconnect://desktop/artwork/${this.#art.hash}.png`) : null,
-      appearance: appearance(c.env), ...(overlay ? {} : { metadata: track ? this.metadata : { state: 'disabled' }, hasLastfmKey: !!c.env.LASTFM_KEY, overlayState: this.overlayState }) };
+      queue: track && Date.now() - this.queue.updatedAt < 10000 ? this.queue : { state: 'unavailable', tracks: [] },
+      appearance: appearance(c.env), ...(overlay ? {} : { metadata: track ? this.metadata : { state: 'disabled' }, hasLastfmKey: !!c.env.LASTFM_KEY, overlayState: this.overlayState, overlayClients: this.feed?.clients || 0 }) };
   }
   artwork(hash) { return this.#art && this.#art.hash === hash && this.snapshot().track ? this.#art.data : null; }
   async similar() {
@@ -75,30 +89,37 @@ export class PlaybackStudio {
     return this.metadataTrack === id ? value : { state: 'changed', tracks: [] };
   }
   overlayUrl() { if (!this.#server || this.overlayState !== 'ready') throw new InputError('Enable the overlay server first.'); return `http://127.0.0.1:${this.#server.address().port}/widget/${this.#token}/index.html`; }
+  socialUrl() { if (appearance(this.#controller.env).SOCIAL_ENABLED !== 'true') throw new InputError('Enable and save the social ticker first.'); return this.overlayUrl().replace('/widget/', '/social/'); }
+  socialSnapshot() { return { appearance: Object.fromEntries(Object.entries(appearance(this.#controller.env)).filter(([key]) => key.startsWith('SOCIAL_'))) }; }
   async startOverlay() {
     const env = this.#controller.env;
     if (!/^[a-f\d]{64}$/.test(env.OVERLAY_TOKEN || '')) { this.overlayState = 'not_configured'; return; }
     this.#token = env.OVERLAY_TOKEN;
     const assets = new Map();
-    for (const name of ['overlay.html', 'overlay.js', 'widget.js', 'widget.css']) assets.set(name, await readFile(new URL(name, import.meta.url)));
+    for (const name of ['overlay.html', 'overlay.js', 'widget.js', 'widget.css', 'social.html', 'social.js', 'social.css', ...['tiktok', 'twitch', 'discord', 'youtube', 'instagram', 'kick', 'website'].map(p => `assets/platforms/${p}.svg`)]) assets.set(name, await readFile(new URL(name, import.meta.url)));
     const server = http.createServer((req, res) => {
       const origin = `http://127.0.0.1:${server.address()?.port}`;
       const send = (status, type, body) => { res.writeHead(status, { 'Content-Type': type, 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'X-Robots-Tag': 'noindex, nofollow', 'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'" }); res.end(req.method === 'HEAD' ? undefined : body); };
       if (!['GET', 'HEAD'].includes(req.method) || req.headers.host !== origin.slice(7) || (req.headers.origin && req.headers.origin !== origin)) return send(403, 'text/plain', 'Not permitted');
-      const match = /^\/widget\/([a-f\d]{64})\/(index\.html|state|art\.png|widget\.js|widget\.css|overlay\.js)(?:\?v=[a-f\d]{16})?$/.exec(req.url || '');
-      if (!match || !timingSafeEqual(Buffer.from(match[1]), Buffer.from(this.#token))) return send(404, 'text/plain', 'Not found');
-      const name = match[2];
-      if (name === 'state') return send(200, 'application/json', JSON.stringify(this.snapshot({ overlay: true })));
+      const match = /^\/(widget|social)\/([a-f\d]{64})\/(index\.html|state|art\.png|widget\.js|widget\.css|overlay\.js|social\.js|social\.css|assets\/platforms\/(?:tiktok|twitch|discord|youtube|instagram|kick|website)\.svg)(?:\?v=[a-f\d]{16})?$/.exec(req.url || '');
+      if (!match || !timingSafeEqual(Buffer.from(match[2]), Buffer.from(this.#token))) return send(404, 'text/plain', 'Not found');
+      const name = match[3];
+      if (name === 'state') return send(200, 'application/json', JSON.stringify(match[1] === 'social' ? this.socialSnapshot() : this.snapshot({ overlay: true })));
       if (name === 'art.png') return send(this.#art && this.snapshot().track ? 200 : 404, 'image/png', this.#art && this.snapshot().track ? this.#art.data : '');
-      return send(200, name.endsWith('.css') ? 'text/css' : name.endsWith('.js') ? 'text/javascript' : 'text/html', assets.get(name === 'index.html' ? 'overlay.html' : name));
+      return send(200, name.endsWith('.svg') ? 'image/svg+xml' : name.endsWith('.css') ? 'text/css' : name.endsWith('.js') ? 'text/javascript' : 'text/html', assets.get(name === 'index.html' ? match[1] === 'social' ? 'social.html' : 'overlay.html' : name));
     });
     server.maxConnections = 32; server.requestTimeout = 5000; server.headersTimeout = 5000; server.keepAliveTimeout = 1000;
+    this.feed = overlayFeed(server, req => {
+      const origin = `http://127.0.0.1:${server.address()?.port}`;
+      const match = /^\/(widget|social)\/([a-f\d]{64})\/events$/.exec(req.url || '');
+      return req.method === 'GET' && req.headers.host === origin.slice(7) && (!req.headers.origin || req.headers.origin === origin) && match && timingSafeEqual(Buffer.from(match[2]), Buffer.from(this.#token));
+    }, req => req.url.startsWith('/social/') ? this.socialSnapshot() : this.snapshot({ overlay: true }));
     try {
       await new Promise((resolve, reject) => { server.once('error', reject); server.listen(Number(appearance(env).OVERLAY_PORT), '127.0.0.1', resolve); });
       server.on('error', () => { this.overlayState = 'error'; }); this.#server = server; this.overlayState = 'ready';
-    } catch { this.overlayState = 'port_unavailable'; server.close(); }
+    } catch { this.overlayState = 'port_unavailable'; this.feed.close(); server.close(); }
   }
-  async stopOverlay() { const server = this.#server; this.#server = null; if (server) await new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }); }
+  async stopOverlay() { const server = this.#server; this.#server = null; this.feed?.close(); this.feed = null; if (server) await new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }); }
   async close() { this.#closed = true; clearInterval(this.#timer); this.#generation++; await this.stopOverlay(); this.track = null; this.#art = null; }
 }
 export const newOverlayToken = () => randomBytes(32).toString('hex');

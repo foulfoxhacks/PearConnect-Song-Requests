@@ -96,7 +96,7 @@ async function refreshQueue() {
   finally { queueRefreshing = false; }
 }
 function render(value, forms = false) {
-  window.PearStudio.render(value.studio, forms);
+  window.PearStudio.render(value.studio, forms); window.PearStudio.discord(value.discord);
   renderVerification(value);
   const session = value.session;
   $('#session-create-form').hidden = !!session && !session.ended && session.state !== 'expired';
@@ -173,7 +173,7 @@ async function call(name, payload, formUpdate = false) {
     if (name === 'finishVerification') { notice('Guided checks passed. Requests are enabled. Watch the activity feed for your first enqueue confirmation.'); view('dashboard'); }
     return value;
   } catch (error) { notice(error.message || 'Operation failed.', true); }
-  finally { busy = false; document.querySelectorAll('button:not([data-view])').forEach(button => { button.disabled = false; }); $('#export-report').disabled = !previewReady; if (snapshot) renderVerification(snapshot); }
+  finally { busy = false; document.querySelectorAll('button:not([data-view])').forEach(button => { button.disabled = false; }); $('#export-report').disabled = !previewReady; if (snapshot) { renderVerification(snapshot); window.PearStudio.discord(snapshot.discord); } }
 }
 
 function renderVerification(value) {
@@ -206,10 +206,12 @@ $('.skip-link').addEventListener('click', event => { event.preventDefault(); $('
 document.querySelectorAll('[data-view]').forEach(button => button.addEventListener('click', () => view(button.dataset.view)));
 document.querySelectorAll('[data-action]').forEach(button => button.addEventListener('click', () => call(button.dataset.action)));
 document.querySelectorAll('[data-mode]').forEach(button => button.addEventListener('click', () => call('mode', button.dataset.mode, true)));
-for (const [id, operation] of [['rules-form', 'rules'], ['connections-form', 'connections'], ['sample-form', 'testRequest'], ['verify-song-form', 'verifySong'], ['session-create-form', 'createSession'], ['session-expiry-form', 'updateSession'], ['widget-form', 'appearance'], ['appearance-form', 'appearance'], ['lastfm-form', 'appearance']]) {
+for (const [id, operation] of [['rules-form', 'rules'], ['connections-form', 'connections'], ['sample-form', 'testRequest'], ['verify-song-form', 'verifySong'], ['session-create-form', 'createSession'], ['session-expiry-form', 'updateSession'], ['widget-form', 'appearance'], ['appearance-form', 'appearance'], ['lastfm-form', 'appearance'], ['discord-form', 'appearance'], ['social-form', 'appearance']]) {
   $(`#${id}`).addEventListener('submit', event => { event.preventDefault(); call(operation, Object.fromEntries(new FormData(event.currentTarget)), true); });
 }
 async function refresh() { if (busy || document.hidden) return; try { const result = await api.snapshot(); if (result.ok) render(result.value); } catch { /* A closing window needs no retry action. */ } }
 call('snapshot');
 setInterval(refresh, 2000);
 setInterval(() => { if (activeView === 'requests' && Date.now() - lastQueueRefresh >= 5000) refreshQueue(); }, 1000);
+
+$('#discord-live').addEventListener('click', () => call('discordLive', !snapshot?.discord?.live));
