@@ -12,7 +12,7 @@ PearConnect brings live chat song requests to **Pear Desktop**. Run it in a desk
 <div class="doc-intro-links"><a href="/docs/install"><strong>Get started →</strong><span>Download the Windows app and set up your first request.</span></a><a href="/docs/advanced"><strong>Keep your automation →</strong><span>Connect an existing Streamer.bot workflow.</span></a></div>
 
 ::: info Desktop preview
-The current request-app release is **0.3.0-beta.4**. The separate [PearConnect Player preview](./pearconnect-player) supplies the music player and its customization workspace. See the [release notes](./releases) for validation and remaining limits.
+The current request-app release is **0.3.0-beta.5**. The separate [PearConnect Player preview](./pearconnect-player) supplies the music player and its customization workspace. See the [release notes](./releases) for validation and remaining limits.
 :::
 
 ## Pick your connection

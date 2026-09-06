@@ -5,6 +5,23 @@ description: Download the current PearConnect desktop preview and understand wha
 
 # Release notes
 
+## 0.3.0-beta.5 · Stream overlays & Discord presence
+
+**5 September 2026** · Windows x64 · Portable ZIP
+
+[Download the current Windows preview](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/download/v0.3.0-beta.5/PearConnect-0.3.0-beta.5-win-x64.zip) · [Release and checksums](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/tag/v0.3.0-beta.5)
+
+- A read-only WebSocket overlay shows now playing and up to five upcoming songs in actual player order. It reconnects, falls back to HTTP, clears stale data and refuses ambiguous queue positions.
+- Vertical layout and calculated source dimensions help compact widgets fit TikTok LIVE Studio. See [Visual studio](./visual-studio) for exact Link-source settings.
+- A separate social ticker rotates your configured handles, with seven local platform icons, three icon styles and adjustable timing. Sample data stays in the app preview.
+- Discord desktop Rich Presence uses the bundled public application ID. It connects automatically, supports a session-only live label and optional song sharing, respects Discord activity privacy, and clears on exit. No client secret is distributed.
+- Existing Simple/Advanced inputs, request permissions, queue confirmation and website sessions keep using the shared engine. No unofficial second-account authorization is claimed.
+
+The installed Discord client accepted this application's presence during validation. A read-only live-player check displayed **Happy — Letdown.** through the new WebSocket overlay; that player had no upcoming tracks. Queue order, reconnects, icon rotation, four layout sizes, privacy boundaries and desktop forms were tested separately with fixtures. This does not claim a new end-to-end TikTok chat enqueue rehearsal or guarantee broadcast visibility in every scene.
+
+Close your old PearConnect Desktop, extract the complete ZIP and open the new **PearConnect.exe**. Keep PearConnect Player running. Saved settings remain, but request intake starts paused and session codes must be recreated. Update the Link source dimensions after enabling the queue; the social ticker needs its own source URL. The build remains an unsigned preview.
+
+
 ## 0.3.0-beta.4 · Search metadata & queue verification
 
 **5 September 2026** · Windows x64 · Portable ZIP

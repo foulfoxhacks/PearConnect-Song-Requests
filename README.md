@@ -1,10 +1,10 @@
 # PearConnect Song Requests
 
-Local-first song requests for **Pear Desktop**, with a **desktop console or CLI** and two TikTok connection modes. The `0.3.0-beta.4` preview fixes duration lookup using the player's Songs/Videos filters, verifies queue additions by video ID, and refreshes the visible player queue automatically. Artwork, playback timing, customizable OBS widgets, guided validation and expiring website request codes remain included.
+Local-first song requests for **Pear Desktop**, with a **desktop console or CLI** and two TikTok connection modes. The `0.3.0-beta.5` preview adds a live player-queue overlay, portrait layouts for TikTok Studio, a separate social ticker with platform icon packs, and Discord desktop Rich Presence. Duration lookup, verified queue additions, guided validation and expiring website request codes remain included.
 
 **Player compatibility:** a live test with YouTube Music Desktop 3.11.0 reproduced an acknowledged enqueue with no new queue entry. This preview reports that outcome honestly; it does not repair the external player's enqueue implementation. Update the player and verify one request before a stream.
 
-**[Website and Windows download](https://pearconnect.mellozone.site/)** · **[Documentation](https://pearconnect.mellozone.site/docs/)** · [Preview release notes](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/tag/v0.3.0-beta.4)
+**[Website and Windows download](https://pearconnect.mellozone.site/)** · **[Documentation](https://pearconnect.mellozone.site/docs/)** · [Preview release notes](https://github.com/foulfoxhacks/PearConnect-Song-Requests/releases/tag/v0.3.0-beta.5)
 
 Start in **Setup guide → Start guided test** to verify the player, a unique live chat command and a read-only song search. If TikTok commands cannot connect, **Session-code fallback** creates a temporary code for [website requests](https://pearconnect.mellozone.site/sessioncode). Expiration is configurable from 15 minutes to 24 hours in Desktop or the [paired web dashboard](https://pearconnect.mellozone.site/web/dashboard). The fallback suspends TikTok command intake and cannot bypass restricted request allowlists. See the [session guide](https://pearconnect.mellozone.site/docs/session-codes) for identity and delivery limits.
 
