@@ -9,10 +9,14 @@ Start on **Overview**. Check the player, chat input and request intake separatel
 
 ## Player will not connect
 
-1. Open Pear Desktop and enable its API Server plugin.
-2. Check **Player API address** in Connections. The default is `http://127.0.0.1:26538`.
-3. Select **Authorize PearConnect** and approve the request in the player.
-4. Select **Test player connection**.
+For first-time setup, follow [Connect your player](./player). If a previously working connection fails, use the status in **Connections → Pear Desktop** to choose the repair:
+
+| Symptom | Next step |
+| --- | --- |
+| Cannot reach the player | Confirm the player is running and its API Server is enabled. Compare its listening port with **Player API address**. |
+| Awaiting approval | Bring the player window forward and respond to its authorization prompt. |
+| Authorization expired | Select **Authorize PearConnect** to request a new credential. |
+| Port already in use | Close the other player using port **26538**, or configure distinct ports before reconnecting. |
 
 If authorization expired, authorize again. Changing the player address clears the old credential. An idle player's empty current-track response can still be a successful connection.
 
@@ -57,7 +61,9 @@ PearConnect does not automatically retry player writes. Re-submitting a command 
 
 From beta.4, **Enqueue confirmed** requires a new occurrence of the selected video ID in a before/after queue check. The result includes its observed position. New requests go to the end of the existing queue; scroll down in the player's **Up next** list or open **PearConnect → Requests & queue**, which refreshes while visible. Positions are snapshots and can change with playback or manual edits.
 
-**Outcome uncertain** can also mean the API accepted a command without changing the queue. This was reproduced with YouTube Music Desktop 3.11.0. A player connection indicator or HTTP 204 is not proof of an addition. Update to the [current official player release](https://github.com/pear-devs/pear-desktop/releases/latest), authorize it, then verify one request. A newer player is a compatibility step, not a guaranteed fix. Check the existing queue before submitting again.
+**Outcome uncertain** can also mean the API accepted a command without changing the queue. Live checks encountered this with YouTube Music Desktop 3.11.0 and 3.12.0. A player connection indicator or HTTP 204 is not proof of an addition.
+
+For our modified player, follow the [PearConnect Player setup guide](./pearconnect-player#connect-it-to-your-stream). It verifies the queue after inserting the selected recording. The original signed-in session's failure was not reproduced in a fresh profile, so the cause remains unconfirmed. If you use the [official player](https://github.com/pear-devs/pear-desktop/releases/latest), update and authorize it before testing compatibility. In either case, inspect the existing queue before submitting another request.
 
 ## Search finds the song but cannot verify its length
 

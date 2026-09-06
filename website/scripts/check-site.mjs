@@ -27,8 +27,9 @@ const paths = (await files(root)).map(file => relative(root, file).split(sep).jo
 const known = new Set(paths);
 const pages = new Map(await Promise.all(paths.filter(path => path.endsWith('.html')).map(async path => [path, await readFile(join(root, path), 'utf8')])));
 const ids = new Map([...pages].map(([path, html]) => [path, new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]))]));
-const expected = ['index.html', '404.html', 'sessioncode.html', 'web/dashboard.html', 'docs/index.html', ...['install', 'player', 'simple', 'advanced', 'platforms', 'commands', 'rules', 'cli', 'troubleshooting', 'faq', 'security', 'releases', 'validation', 'session-codes'].map(name => `docs/${name}.html`)];
+const expected = ['index.html', '404.html', 'sessioncode.html', 'web/dashboard.html', 'docs/index.html', ...['install', 'player', 'pearconnect-player', 'simple', 'advanced', 'platforms', 'commands', 'rules', 'cli', 'troubleshooting', 'faq', 'security', 'releases', 'validation', 'session-codes', 'visual-studio'].map(name => `docs/${name}.html`)];
 for (const path of expected) assert.ok(known.has(path), `Missing route: ${path}`);
+const publicMetadata = { title: new Map(), description: new Map() };
 let checked = 0;
 for (const [page, html] of pages) {
   assert.match(html, /<title>[^<]+<\/title>/, `${page} needs a title`);
@@ -48,6 +49,12 @@ for (const [page, html] of pages) {
     const title = decodeHtml(head.match(/<title>(.*?)<\/title>/)[1]);
     const description = meta(head, 'description');
     assert.ok(description?.length > 30, `${page} needs a useful description`);
+    if (!page.startsWith('web/')) for (const [key, value] of Object.entries({ title, description })) {
+      const normalized = value.trim().replace(/\s+/g, ' ').toLowerCase();
+      const previous = publicMetadata[key].get(normalized);
+      assert.ok(!previous, `${page} duplicates ${key} from ${previous}`);
+      publicMetadata[key].set(normalized, page);
+    }
     for (const key of ['og:title', 'twitter:title']) assert.equal(meta(head, key), title);
     for (const key of ['og:description', 'twitter:description']) assert.equal(meta(head, key), description);
     for (const key of ['author', 'publisher']) assert.equal(meta(head, key), 'FoulFoxHacks');

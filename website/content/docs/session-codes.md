@@ -51,9 +51,12 @@ Additional attempt limits protect the public form. Request history is not proof 
 | --- | --- |
 | Received | Stored briefly for Desktop to collect; not yet accepted by the player. |
 | Checking | Desktop claimed it and is checking the song. |
-| Enqueue confirmed | Pear Desktop accepted the enqueue operation. Playback follows the player’s queue. |
+| Enqueue confirmed | Desktop verified a new entry for the selected recording in the player queue. Its position is a snapshot, not a promise that playback has started. |
+| Queue not verified | An older Desktop version acknowledged the command without checking Up next. Ask the streamer to inspect the queue and update to beta.4 or later. |
 | Rejected | A rule or connection check prevented the request. Read the explanation. |
-| Outcome uncertain | A response was lost after processing may have started. Check the player before retrying. |
+| Outcome uncertain | Processing may have started, but Desktop could not confirm the queue changed. Ask the streamer to check the player before sending another request. |
+
+New songs are appended to the existing queue. The streamer can inspect **Requests & queue** in Desktop or scroll to the end of **Up next** in the player. For an unexpected result, follow [missing queue entries](./troubleshooting#accepted-command-but-no-song-in-the-queue).
 
 The relay never automatically redelivers a claimed request. Before a player write, Desktop checks that the session still allows it. A pause or expiration cannot undo an enqueue that has already begun. Requests that cannot be collected in time expire rather than waiting for a later stream.
 
