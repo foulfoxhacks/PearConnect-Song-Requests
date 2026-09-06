@@ -1,0 +1,10 @@
+import { spawn } from 'node:child_process';
+import { mkdir, mkdtemp } from 'node:fs/promises';
+import { resolve } from 'node:path';
+await mkdir('dist/player-tests',{recursive:true});
+const profile=await mkdtemp(resolve('dist/player-tests/run-'));
+const env={...process.env};delete env.ELECTRON_RUN_AS_NODE;
+const child=spawn(resolve('node_modules/electron/dist/electron.exe'),[resolve('player/acceptance-electron.mjs'),profile,...(process.argv.includes('--packaged')?['--packaged']:[])],{env,stdio:'inherit',windowsHide:true});
+const timer=setTimeout(()=>{child.kill();process.exitCode=1;},100000);
+child.on('exit',code=>{clearTimeout(timer);console.log('Acceptance profile:',profile);process.exitCode=code||0;});
+child.on('error',error=>{clearTimeout(timer);console.error(error);process.exitCode=1;});

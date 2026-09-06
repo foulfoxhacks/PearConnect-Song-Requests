@@ -1,0 +1,13 @@
+{
+  "format": 1,
+  "id": "now-playing",
+  "name": "Now playing",
+  "version": "1.0.0",
+  "description": "A minimal live music widget with artwork, track progress and remaining time.",
+  "permissions": [
+    "playback.read"
+  ],
+  "html": "<main><img id=\"art\" alt=\"Album artwork\"><div><p>PEARCONNECT / NOW PLAYING</p><h1 id=\"title\">Waiting for music</h1><h2 id=\"artist\"></h2><progress id=\"progress\" max=\"1\" value=\"0\"></progress><small id=\"time\"></small></div></main>",
+  "css": "body{margin:0;background:#101714;color:#edf1e9;font:16px Segoe UI,sans-serif}main{display:flex;gap:28px;padding:38px;align-items:center}img{width:150px;height:150px;object-fit:cover;background:#263927}p{font-size:10px;letter-spacing:2px;color:#c5e58c}h1{font-size:27px;margin:12px 0}h2{font-size:15px;color:#a9b6ac;font-weight:400}progress{width:100%;height:4px;accent-color:#c5e58c}small{display:block;margin-top:12px;color:#a9b6ac}@media(max-width:480px){main{display:block}img{width:90px;height:90px}}",
+  "javascript": "const el=id=>document.getElementById(id);const time=n=>{n=Math.max(0,Math.floor(n||0));return Math.floor(n/60)+\":\"+String(n%60).padStart(2,\"0\")};async function update(){try{const p=await pearconnect.getPlayback();el(\"title\").textContent=p.title;el(\"artist\").textContent=p.artist;el(\"progress\").max=p.duration||1;el(\"progress\").value=p.elapsed;el(\"time\").textContent=time(p.elapsed)+\" played / \"+time(p.duration-p.elapsed)+\" left\";if(el(\"art\").src!==p.artwork)el(\"art\").src=p.artwork||\"\";}catch{el(\"title\").textContent=\"Playback permission unavailable\";}}update();setInterval(update,1000);"
+}
