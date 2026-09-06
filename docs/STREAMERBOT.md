@@ -49,6 +49,10 @@ Enable Streamer.bot's **WebSocket Server** under **Servers/Clients**, keeping it
 
 In **Actions & Events**, create a TikFinity action of type **Streamer.bot Action**, choose **PearConnect - Song Request**, and save it. Assign it to the `!sr` custom command event. Repeat for the other desired commands. Avoid overlapping duplicate mappings.
 
+Use the actual command saved in PearConnect. For `!play`, set Desktop's **Song request** to `play`, the persisted global `PearConnect.RequestCommand` to `play`, and TikFinity's event to **Commenting a command → !play**. Select the saved action under **Trigger all of these actions**, not the random-action field or **Chat (any comment)**. The [public setup guide](https://pearconnect.mellozone.site/docs/advanced#connect-and-map-tikfinity) describes every field and the optional read/skip mappings.
+
+Simple mode needs none of these Actions & Events mappings: it reads the local TikFinity chat feed directly. A live marker from the [guided connection test](https://pearconnect.mellozone.site/docs/validation) verifies delivery through your selected route. Local connection tests and follow/gift simulations cannot pass as a live chat test.
+
 TikFinity supplies `username`, `userId`, and `commandParams`. Its documentation describes `commandParams` as the comment or the custom-command parameters, so the bridge handles both:
 
 ```text

@@ -26,6 +26,20 @@ ws://127.0.0.1:21213/
 
 The address can be changed to another loopback endpoint. PearConnect does not accept a remote event server through this setting.
 
+## Do I need TikFinity Actions & Events?
+
+**No. Simple mode reads chat directly.** You do not need a Song Request action, a **Commenting a command** event, a **Trigger WebHook** action, Streamer.bot, or a TikFinity overlay for this route. Existing follow, gift and TTS actions can remain configured for their own jobs.
+
+In **PearConnect Desktop → Request rules → Chat commands**, check the actual **Song request** name. The default is `sr`, but if you saved `play`, viewers must send:
+
+```text
+!play Bad Wolves Hear Me Now feat. DIAMANTE
+```
+
+Enter `play` without `!` in the setting. `!sr` is not an automatic alias. Keep `np`, `queue` and `skip`, or give each a distinct name. TikFinity's separate song-request feature is not required; avoid configuring another music handler for the same command.
+
+For custom actions and events, use the [Advanced route](./advanced#connect-and-map-tikfinity) instead. Do not create an Advanced request mapping as a repair for a disconnected Simple feed.
+
 ## Verify that chat is arriving
 
 Overview separates three signals:
@@ -38,9 +52,11 @@ Overview separates three signals:
 
 ## Test and enable
 
-Use **Validate sample request** in Setup guide to check the sample identity, query and basic permissions. It does not contact the player, search a song, verify duration or consume a request slot.
+Open **Setup guide → Start guided test** and follow the [four checkpoints](./validation). The guide pauses requests, checks the player, supplies an expiring test command using your saved command name, then checks a real song against your rules without adding it.
 
-Use **Test player connection** separately, then select **Enable requests**. A real `!sr Artist Song Title` command can now search and enqueue music according to your rules.
+After the guided checks pass, enable requests and send **one** real song request. Look for **Enqueue confirmed**, then inspect the end of **Player → Up next** and **Desktop → Requests & queue**. Queue confirmation is separate from the track beginning playback.
+
+The older **Validate sample request** control lives under **Setup reference & manual controls**. It checks the sample identity, query and basic permissions only; it does not search a song or verify duration. It cannot substitute for the guided song check.
 
 ## Where results appear
 

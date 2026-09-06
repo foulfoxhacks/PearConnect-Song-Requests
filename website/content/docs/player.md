@@ -28,6 +28,12 @@ If your player uses another local port, open **Connections → Pear Desktop**, u
 
 The desktop app saves the returned credential using the operating system's encryption facilities. You don't need to copy a bearer token from a terminal.
 
+### Client ID and bearer token are different
+
+**Client ID** is a short name for the requesting application, such as `ytmd-stream-bot`. The player's authorization endpoint returns an `accessToken` after approval. That returned token belongs in an `Authorization: Bearer …` header for API requests; it does not belong in the Client ID field or in an `/auth/…` URL.
+
+Use **Authorize PearConnect** for the supported setup. Do not paste credentials into shared bridge scripts, screenshots, issues or chat. A script that uses the same TikFinity commands alongside PearConnect can submit the same request twice, with separate cooldowns and counters. Run one request handler for that route.
+
 ## Test the connection
 
 Use **Test player connection** on Overview or **Test player** in Connections. This checks player reachability without changing playback.
