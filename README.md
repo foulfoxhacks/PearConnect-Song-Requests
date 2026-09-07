@@ -314,3 +314,11 @@ REGRESSION_LEDGER.md       safeguards and change record
 Read [REGRESSION_LEDGER.md](REGRESSION_LEDGER.md) before changing integration behavior. Keep source and import synchronized, preserve POST-only mutations, add regression tests, and distinguish mock verification from live-platform evidence in pull requests.
 
 MIT licensed; see [LICENSE](LICENSE). Built by [Aleksandr "Sammy" Freyermuth](https://github.com/foulfoxhacks). Thanks to Pear Desktop, TikFinity, Streamer.bot, `tmi.js`, and `youtube-chat` for the upstream tools and interfaces.
+
+## Creator
+
+Built by [Sammy The Femboy Puppy](https://akasammythepuppy.me/) ([@foulfoxhacks](https://github.com/foulfoxhacks)).
+
+Explore more streaming integrations, local automation, and development projects in [Sammy's creator portfolio](https://akasammythepuppy.me/work/).
+
+For PearConnect bugs and feature requests, [open an issue](https://github.com/foulfoxhacks/PearConnect-Song-Requests/issues) or contribute a pull request in this repository.
